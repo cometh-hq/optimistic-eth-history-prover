@@ -14,7 +14,7 @@ async fn main() -> eyre::Result<()> {
 
 
     let rpc_url = "https://stylus-testnet.arbitrum.io/rpc".to_string();
-    let program_address = "0x1E61F2BB96ee10E88AdBd16ADF1d625B1b5a438B".to_string();
+    let program_address = "0xDf859c81287DD1aAcA02d3F56Eaa4dD3C5615EA3".to_string();
     let privkey = "0x".to_string();
 
     abigen!(
@@ -48,9 +48,6 @@ async fn main() -> eyre::Result<()> {
 
     let first_tx = history_prover.set_block_hash(block_number, block_hash).send().await?.await?;
     println!("First Tx = {:?}", first_tx);
-
-    let second_tx = history_prover.verify_execution_payload_header(block_header.iter().cloned().collect()).send().await?.await?;
-    println!("Second Tx = {:?}", second_tx);
 
     Ok(())
 }
