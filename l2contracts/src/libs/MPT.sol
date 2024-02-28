@@ -29,7 +29,7 @@ library MPT {
         bytes32 root,
         Account memory account,
         bytes[] memory proof
-    ) internal pure returns (bool) {
+    ) internal view returns (bool) {
         uint256 key = uint256(
             keccak256(abi.encodePacked(account.accountAddress))
         );
@@ -51,7 +51,7 @@ library MPT {
         bytes32 root,
         StorageSlot memory slot,
         bytes[] memory proof
-    ) internal pure returns (bool) {
+    ) internal view returns (bool) {
         uint256 key = uint256(keccak256(abi.encode(slot.position)));
 
         bytes memory leaf = verifyLeaf(root, key, proof);
@@ -63,13 +63,14 @@ library MPT {
         bytes32 root,
         uint256 key,
         bytes[] memory proof
-    ) internal pure returns (bytes memory result) {
+    ) internal view returns (bytes memory result) {
         uint256 nibble = 0;
         RLPReader.RLPItem[] memory node;
         for (uint256 index = 0; index < proof.length; ++index) {
             if (keccak256(proof[index]) != root) revert InvalidProof(index);
 
             node = proof[index].toRlpItem().toList();
+            console.log("node", index, node.length);
             if (node.length == 17) {
                 uint256 keyNibble = (key >> (252 - (nibble++ * 4))) & 0xf;
                 root = bytes32(node[keyNibble].toUintStrict());

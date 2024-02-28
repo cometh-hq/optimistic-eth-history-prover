@@ -1,0 +1,11 @@
+{
+  "name": "create_proof",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Kelvyne",
+  "license": "MIT",
+  "dependencies": {
+    "ethers": "5",
+    "viem": "^2.7.15"
+  }
+}

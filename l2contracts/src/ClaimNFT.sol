@@ -11,44 +11,71 @@ contract ClaimNFT is StorageVerifier {
     using RLPReader for bytes;
     using RLPReader for RLPReader.RLPItem;
 
+    address immutable public historyProverAddress;
+
+    constructor(address _historyProverAddress) {
+      historyProverAddress = _historyProverAddress;
+    }
+
     function claim(
+      // L1 Block header that contains the transaction signed by msg.sender
       bytes memory l1BlockHeader,
+      // index of the transaction signed by msg.sender inside the block
+      uint256 txIndex,
+      // State root of the L3 where history prover contract is deployed
+      bytes32 l3StateRoot,
+      // Proof of the history contract storage layout on L3
       bytes[] memory l3StateProof,
-      bytes[] memory historyContractStorageProof
+      // Proof of the storage slot of the L1 block hash in the history prover contract
+      bytes[] memory historyContractStorageProof,
+      // Proof of inclusion of the transaction signed by msg.sender inside the L1 block
+      bytes[] memory txProof
     ) external {
       RLPReader.RLPItem[] memory l1Header = l1BlockHeader.toRlpItem().toList();
 
       uint256 l1BlockNumber = l1Header[8].toUint();
+      bytes32 txRoot = bytes32(l1Header[4].toUint());
+
+      console.logBytes32(txRoot);
+      console.logUint(txIndex);
+
       bytes32 l1BlockHash = keccak256(l1BlockHeader);
 
+      /*
       verifyL3State(
         l1BlockNumber,
         l1BlockHash,
+        l3StateRoot,
         l3StateProof,
         historyContractStorageProof
       );
+      */
+      bytes memory transaction = verifyTransactionInclusion(
+        txRoot,
+        txProof, 
+        txIndex
+      );
+
     }
 
     function verifyTransactionInclusion(
-        bytes[] memory txProof,
         bytes32 txRoot,
+        bytes[] memory txProof,
         uint txIndex
-    ) internal {
+    ) internal returns (bytes memory transaction) {
         bytes memory transaction = MPT.verifyLeaf(txRoot, txIndex, txProof);
+        return transaction;
     }
 
     function verifyL3State(
         uint blockNumber,
         bytes32 blockHash,
+        // FIXME: Find l3 state root from Rollup contract
+        bytes32 l3StateRoot,
         bytes[] memory stateProof,
         bytes[] memory storageProof
     ) internal {
-      // address of HistoryProver on L3
-        address HistoryProverContractAddress = 0xeF1a89cbfAbE59397FfdA11Fc5DF293E9bC5Db90; 
-        uint256 l3StateTrieKey = uint256(keccak256(abi.encodePacked(HistoryProverContractAddress)));
-
-        // https://github.com/OffchainLabs/nitro-contracts/blob/90037b996509312ef1addb3f9352457b8a99d6a6/src/bridge/AbsOutbox.sol#L32
-        bytes32 l3StateRoot;
+        uint256 l3StateTrieKey = uint256(keccak256(abi.encodePacked(historyProverAddress)));
 
         bytes memory accountBytes = MPT.verifyLeaf(l3StateRoot, l3StateTrieKey, stateProof);
         RLPReader.RLPItem[] memory account = accountBytes.toRlpItem().toList();
