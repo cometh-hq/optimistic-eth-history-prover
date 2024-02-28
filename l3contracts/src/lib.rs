@@ -128,7 +128,7 @@ impl HistoryProver {
         let mut new_block_hash = self.block_hash.setter(block_number - U256::from(1));
         new_block_hash.set(parent_hash.into());
 
-        evm::log(BlockHashSet { block_number, block_hash:parent_hash });
+        evm::log(BlockHashSet { block_number:block_number - U256::from(1), block_hash:parent_hash });
     
         Ok(())
     }
