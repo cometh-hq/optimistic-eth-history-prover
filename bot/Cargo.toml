@@ -1,0 +1,17 @@
+[package]
+name = "bot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ethers = "2.0.13"
+reth = { git = "https://github.com/paradigmxyz/reth.git", version = "0.1.0-alpha.20" }
+hex = "0.4.3"
+alloy-rlp = "0.3.4"
+
+
+[dev-dependencies]
+tokio = { version = "1.12.0", features = ["full"] }
+eyre = "0.6.8"
