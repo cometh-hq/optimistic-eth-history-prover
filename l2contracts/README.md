@@ -4,6 +4,8 @@
 
 This contract is used to forward the L1 block hash and number to the L3 chain
 
+Deployed to Arbitrum Sepolia: 0x81e9C0F03f1942513e13A80e42EC60dF2D86a9e8
+
 ## Usage
 
 ### Build
