@@ -11,11 +11,12 @@ import RLP from "rlp";
 import level from "level-mem";
 import { BaseTrie as Trie } from "merkle-patricia-tree";
 import { serializeTransaction, toHex } from "viem";
-import { mainnet } from "viem/chains";
+import { sepolia, mainnet } from "viem/chains";
 import { Button, Typography } from "@alembic/ui";
 import { useContractWrite, useContractRead } from "wagmi";
 import Ranking from "./components/Ranking";
 import { shortenEthAddress } from "./lib/utils/utils";
+import { ethers } from "ethers";
 
 export default function Home() {
   const [currentOwner, setCurrentOwner] = useState(
@@ -23,114 +24,138 @@ export default function Home() {
   );
   const [firstTransactionDate, setFirstTransactionDate] = useState("");
   const { isConnected, address } = useAccount();
-  /*  const { write } = useContractWrite({
-    abi,
-    address: "0x6b175474e89094c44da98b954eedeac495271d0f",
-    functionName: "claim",
-    args: [],
-  });
 
-  const {
-    data: owner,
-    isError,
-    isLoading,
-    refetch,
-  } = useContractRead({
-    address: "0xecb504d39723b0be0e3a9aa33d646642d1051ee1",
-    abi,
-    functionName: "ownerOf",
-  }); */
-
-  const mainnetClient = usePublicClient({
-    chainId: mainnet.id,
+  const sepoliaClient = usePublicClient({
+    chainId: sepolia.id,
   });
 
   useEffect(() => {
-    if (!mainnetClient) return;
+    if (!sepoliaClient) return;
 
-    const getFirstTxDate = async () => {
+    const getTxDuringEthDenver = async () => {
       const config = {
-        apiKey: "Kh0StYk_8YO-0GzqYzPRD3-T6L9v_Kk9",
-        network: Network.ETH_MAINNET,
+        apiKey: "CHSK86m4Q9RWyWaW6N_RB-IXHQZ663My",
+        network: Network.ETH_SEPOLIA,
       };
       const alchemy = new Alchemy(config);
 
+      const fromBlock = 5346200; // Feb-23-2024 08:35:36 AM +UTC
+      const toBlock = 5387881; // Feb-29-2024 01:51:00 PM +UTC
+
       /* @ts-ignore */
-      const data = await alchemy.core.getAssetTransfers({
-        fromBlock: "0x0",
+      const firstTxdata = await alchemy.core.getAssetTransfers({
+        fromBlock: fromBlock,
+        toBlock: toBlock,
         fromAddress: address,
         category: ["external", "internal", "erc20", "erc721", "erc1155"],
         excludeZeroValue: false,
         maxCount: "0x1",
+        order: "asc",
       });
 
-      if (data.transfers.length == 0) return;
+      if (firstTxdata.transfers.length == 0) return; // todo manage the NO TX Case
 
       /* @ts-ignore */
-      const block = await mainnetClient.getBlock({
-        includeTransactions: true,
-        blockNumber: BigInt(data.transfers[0].blockNum),
+      const lastTxdata = await alchemy.core.getAssetTransfers({
+        fromBlock: fromBlock,
+        toBlock: toBlock,
+        fromAddress: address,
+        category: ["external", "internal", "erc20", "erc721", "erc1155"],
+        excludeZeroValue: false,
+        maxCount: "0x1",
+        order: "desc",
       });
 
-      const db = level();
-      const trie = new Trie(db);
+      const network = "sepolia";
 
-      const firstTransaction = block.transactions.find(
-        (v: any) => v.hash === data.transfers[0].hash
+      const provider = new ethers.AlchemyProvider(
+        "sepolia",
+        "CHSK86m4Q9RWyWaW6N_RB-IXHQZ663My"
+      );
+      const firstBlock = await provider.send("eth_getBlockByNumber", [
+        firstTxdata.transfers[0].blockNum,
+        true,
+      ]);
+
+      const lastBlock = await provider.send("eth_getBlockByNumber", [
+        lastTxdata.transfers[0].blockNum,
+        true,
+      ]);
+
+      const firstTransaction = firstBlock.transactions.find(
+        (v: any) => v.hash === firstTxdata.transfers[0].hash
       );
 
-      for (const transaction of block.transactions) {
-        const key = toHex(RLP.encode(transaction.transactionIndex));
-        // https://github.com/wevm/viem/issues/1867
-        if (!transaction.data) transaction.data = transaction.input;
-        const value = serializeTransaction(transaction, transaction);
+      const lastTransaction = lastBlock.transactions.find(
+        (v: any) => v.hash === lastTxdata.transfers[0].hash
+      );
 
-        await trie.put(
-          Buffer.from(key.slice(2), "hex"),
-          Buffer.from(value.slice(2), "hex")
+      const blocks = [firstBlock, lastBlock];
+      const proofs = [];
+
+      console.log("--Start Proof Computation--");
+
+      for (const block of blocks) {
+        const userTx = proofs.length == 0 ? firstTransaction : lastTransaction;
+
+        console.log(
+          `processing block: ${block.number} for txHash: ${userTx.hash}`
         );
+        const db = level();
+        const trie = new Trie(db);
+
+        for (const tx of block.transactions) {
+          const key = toHex(RLP.encode(parseInt(tx.transactionIndex, 16)));
+
+          tx.data = tx.input;
+          tx.type = parseInt(tx.type, 16);
+          tx.gasLimit = tx.gas;
+
+          tx.signature = ethers.Signature.from({
+            r: tx.r,
+            s: tx.s,
+            v: tx.v,
+          });
+
+          const value = ethers.Transaction.from(tx).serialized;
+          //console.log("txHash:", transaction.hash);
+          //  console.log("value:", value);
+          await trie.put(
+            Buffer.from(key.slice(2), "hex"),
+            Buffer.from(value.slice(2), "hex")
+          );
+        }
+
+        const sKey = toHex(RLP.encode(userTx.transactionIndex));
+
+        const proof = await Trie.createProof(
+          trie,
+          Buffer.from(sKey.slice(2), "hex")
+        );
+
+        const value = await Trie.verifyProof(
+          trie.root,
+          Buffer.from(sKey.slice(2), "hex"),
+          proof
+        );
+
+        proofs.push([Buffer.from(sKey.slice(2), "hex"), proof]);
+
+        console.log("block", block.hash, parseInt(block.number, 16));
+        console.log("user tx", userTx.hash);
+        console.log("PROOF");
+        console.log(proof.map(toHex));
       }
 
-      console.log("firstTransaction:", firstTransaction);
+      console.log("--End Proof Computation--");
 
-      if (!firstTransaction.data)
-        firstTransaction.data = firstTransaction.input;
-
-      const sKey = toHex(RLP.encode(firstTransaction.transactionIndex));
-
-      const proof = await Trie.createProof(
-        trie,
-        Buffer.from(sKey.slice(2), "hex")
-      );
-
-      const value = await Trie.verifyProof(
-        trie.root,
-        Buffer.from(sKey.slice(2), "hex"),
-        proof
-      );
-
-      const hexValue = [...new Uint8Array(value)]
-        .map((x) => x.toString(16).padStart(2, "0"))
-        .join("");
-
-      console.log("Raw Transaction Hex:", hexValue);
-
-      let date = new Date(Number(block.timestamp) * 1000);
-      setFirstTransactionDate("First tx: " + date.toDateString());
+      //let date = new Date(Number(block.timestamp) * 1000);
+      //setFirstTransactionDate("First tx: " + date.toDateString());
     };
 
-    isConnected ? getFirstTxDate() : setFirstTransactionDate("");
-  }, [isConnected, mainnetClient]); // Only re-run the effect if count changes
+    isConnected ? getTxDuringEthDenver() : setFirstTransactionDate("");
+  }, [isConnected, sepoliaClient]); // Only re-run the effect if count changes
 
-  /*  const claimNft = () => {
-    write();
-  };
-
-  const getNftOwner = () => {
-    refetch();
-    setCurrentOwner(owner);
-  };
- */
   return (
     <main className="flex min-h-screen  flex-col items-center justify-between p-12">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">

@@ -2,9 +2,9 @@
 
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { WagmiConfig, configureChains, createConfig } from "wagmi";
 
-import { mainnet, arbitrumSepolia } from "viem/chains";
+import { WagmiConfig, configureChains, createConfig } from "wagmi";
+import { mainnet, arbitrumSepolia, sepolia } from "viem/chains";
 import { createWeb3Modal } from "@web3modal/wagmi/react";
 import { InjectedConnector } from "wagmi/connectors/injected";
 
@@ -12,7 +12,8 @@ import { publicProvider } from "wagmi/providers/public";
 
 const projectId = "a7fa331cdb83855d6b7256e41d06551f";
 
-const chains = [arbitrumSepolia, mainnet];
+
+const chains = [arbitrumSepolia, mainnet, sepolia];
 
 const inter = Inter({
   subsets: ["latin"],
