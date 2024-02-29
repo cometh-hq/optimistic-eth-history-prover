@@ -3,15 +3,15 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import { ClaimNFT } from "../src/ClaimNFT.sol";
-import { OGEthereum } from "../src/OGEthereum.sol";
+import { ETHDenverBuilder } from "../src/ETHDenverBuilder.sol";
 
 contract ClaimNFTTest is Test {
-    OGEthereum private nft;
+    ETHDenverBuilder private nft;
     ClaimNFT private claimer;
 
     function setUp() public {
         // Deploy NFT contract
-      nft = new OGEthereum();
+      nft = new ETHDenverBuilder();
       claimer = new ClaimNFT(nft, 0x6023974F44AE50635feEAaF9DEF6405f10299610, 5348475, 5387881);
       nft.grantRole(nft.CLAIMER_ROLE(), address(claimer));
     }

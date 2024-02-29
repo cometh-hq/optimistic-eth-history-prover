@@ -38,17 +38,11 @@ async fn main() -> eyre::Result<()> {
     // Prover contract
     let history_prover = HistoryProver::new(address, client);
 
-    let first_block = U256::from(5357043);
-    let first_block_hash: [u8; 32] = hex::decode("73646fba8d16801b16e94aa7a89d4e21db95e03537317b3a378b34cacda0ebde").unwrap().try_into().unwrap();
+    let block = U256::from(5357043);
+    let block_hash: [u8; 32] = hex::decode("73646fba8d16801b16e94aa7a89d4e21db95e03537317b3a378b34cacda0ebde").unwrap().try_into().unwrap();
 
-    let second_block = U256::from(5387614);
-    let second_block_hash: [u8; 32] = hex::decode("8746dda7b30f931685d8404113d79899ae68ed285b2632dc94a64938b0025c09").unwrap().try_into().unwrap();
-
-
-    let tx = history_prover.set_block_hash(first_block, first_block_hash).send().await?.await?;
-    println!("tx = {:?}", tx);
-    let tx = history_prover.set_block_hash(second_block, second_block_hash).send().await?.await?;
-    println!("tx = {:?}", tx);
+    let tx = history_prover.set_block_hash(block, block_hash).send().await?.await?;
+    println!("tx receipt = {:?}", tx);
 
     Ok(())
 }

@@ -15,7 +15,7 @@ async fn main() -> eyre::Result<()> {
 
     let rpc_url = "https://stylus-testnet.arbitrum.io/rpc".to_string();
     let program_address = "0x6023974F44AE50635feEAaF9DEF6405f10299610".to_string();
-    let privkey = "0x".to_string();
+    let privkey = std::env::var("PRIVATE_KEY").unwrap();
 
     abigen!(
         HistoryProver,

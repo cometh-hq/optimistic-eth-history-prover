@@ -7,7 +7,7 @@ import {StorageVerifier} from "./libs/StorageVerifier.sol";
 import {TransactionHasher} from "./libs/TransactionHasher.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {RLPReader} from "./libs/RLPReader.sol";
-import {OGEthereum} from "./OGEthereum.sol";
+import {ETHDenverBuilder} from "./ETHDenverBuilder.sol";
 
 contract ClaimNFT is StorageVerifier {
     using RLPReader for bytes;
@@ -15,7 +15,7 @@ contract ClaimNFT is StorageVerifier {
 
     address immutable public historyProverAddress;
 
-    OGEthereum public nft;
+    ETHDenverBuilder public nft;
 
     uint256 public minL1Block;
     uint256 public maxL1Block;
@@ -43,7 +43,7 @@ contract ClaimNFT is StorageVerifier {
     error InvalidRangeTx(uint256 blockNumber);
 
     constructor(
-      OGEthereum _nft,
+      ETHDenverBuilder _nft,
       address _historyProverAddress,
       uint256 _minL1Block,
       uint256 _maxL1Block
