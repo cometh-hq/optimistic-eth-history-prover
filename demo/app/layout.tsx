@@ -1,23 +1,34 @@
 "use client";
 
+import { Inter } from "next/font/google";
 import "./globals.css";
-import { WagmiProvider, createConfig } from "wagmi";
-import { arbitrumSepolia, mainnet } from "viem/chains";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ConnectKitProvider, getDefaultConfig } from "connectkit";
+import { WagmiConfig, configureChains, createConfig } from "wagmi";
+
+import { mainnet, arbitrumSepolia } from "viem/chains";
+import { createWeb3Modal } from "@web3modal/wagmi/react";
+import { InjectedConnector } from "wagmi/connectors/injected";
+
+import { publicProvider } from "wagmi/providers/public";
+
+const projectId = "a7fa331cdb83855d6b7256e41d06551f";
 
 const chains = [arbitrumSepolia, mainnet];
 
-const config = createConfig(
-  /* @ts-ignore */
-  getDefaultConfig({
-    /* @ts-ignore */
-    chains,
-    walletConnectProjectId: "5aeb98cffaa638c1f864f7afaf366e29",
-  })
-);
+const inter = Inter({
+  subsets: ["latin"],
+});
 
-const queryClient = new QueryClient();
+const { publicClient } = configureChains(chains, [publicProvider()]);
+
+const wagmiConfig = createConfig({
+  connectors: [
+    new InjectedConnector({ chains, options: { shimDisconnect: true } }),
+  ],
+  publicClient,
+});
+
+// 3. Create modal
+createWeb3Modal({ wagmiConfig, projectId, chains });
 
 export default function RootLayout({
   children,
@@ -26,12 +37,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
-        <WagmiProvider config={config}>
-          <QueryClientProvider client={queryClient}>
-            <ConnectKitProvider>{children}</ConnectKitProvider>
-          </QueryClientProvider>
-        </WagmiProvider>
+      <body className={inter.className}>
+        <WagmiConfig config={wagmiConfig}>{children}</WagmiConfig>
       </body>
     </html>
   );

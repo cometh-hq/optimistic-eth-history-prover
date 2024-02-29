@@ -1,7 +1,5 @@
-import { ConnectKitButton } from "connectkit";
-
 function ConnectWallet(): JSX.Element {
-  return <ConnectKitButton />;
+  return <w3m-button />;
 }
 
 export default ConnectWallet;
