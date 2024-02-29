@@ -1,0 +1,6 @@
+[submodule "l2contracts/lib/solidity-merkle-trees"]
+	path = l2contracts/lib/solidity-merkle-trees
+	url = https://github.com/polytope-labs/solidity-merkle-trees
+[submodule "l2contracts/lib/solidity-rlp-encode"]
+	path = l2contracts/lib/solidity-rlp-encode
+	url = https://github.com/bakaoh/solidity-rlp-encode

@@ -18,19 +18,19 @@ func main() {
     panic(err)
   }
 
-  block, err := client.BlockByNumber(ctx, big.NewInt(1_000_000))
+  block, err := client.BlockByNumber(ctx, big.NewInt(10593417))
   if err != nil {
     panic(err)
   }
 
   buf := &bytes.Buffer{}
 
-  fmt.Println(block.Header())
 
   if err := rlp.Encode(buf, block.Header()); err != nil {
     panic(err)
   }
 
+  fmt.Println(block.Header().TxHash)
   fmt.Println(hexutil.Encode(buf.Bytes()))
   fmt.Println(block.Header().Hash())
 }

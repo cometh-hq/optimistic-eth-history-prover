@@ -25,8 +25,8 @@ const stylusTestnet = defineChain({
 })
 
 async function main() {
-  const l1BlockNumber = 1;
-  const l3BlockNumber = 1044513;
+  const l1BlockNumber = 1_000_000;
+  const l3BlockNumber = 1045473;
   
   const historyProverAddress = '0xDf859c81287DD1aAcA02d3F56Eaa4dD3C5615EA3';
 
@@ -52,8 +52,7 @@ async function main() {
   const block = await client.getBlock({
     blockNumber: l3BlockNumber,
   })
-
-  console.log(block);
+  console.log(block.stateRoot);
 }
 
 main().catch(console.error)

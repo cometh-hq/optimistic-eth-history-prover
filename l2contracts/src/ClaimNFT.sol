@@ -21,7 +21,7 @@ contract ClaimNFT is StorageVerifier {
       // L1 Block header that contains the transaction signed by msg.sender
       bytes memory l1BlockHeader,
       // index of the transaction signed by msg.sender inside the block
-      uint256 txIndex,
+      bytes memory txIndex,
       // State root of the L3 where history prover contract is deployed
       bytes32 l3StateRoot,
       // Proof of the history contract storage layout on L3
@@ -36,12 +36,8 @@ contract ClaimNFT is StorageVerifier {
       uint256 l1BlockNumber = l1Header[8].toUint();
       bytes32 txRoot = bytes32(l1Header[4].toUint());
 
-      console.logBytes32(txRoot);
-      console.logUint(txIndex);
-
       bytes32 l1BlockHash = keccak256(l1BlockHeader);
 
-      /*
       verifyL3State(
         l1BlockNumber,
         l1BlockHash,
@@ -49,22 +45,22 @@ contract ClaimNFT is StorageVerifier {
         l3StateProof,
         historyContractStorageProof
       );
-      */
+
       bytes memory transaction = verifyTransactionInclusion(
         txRoot,
         txProof, 
         txIndex
       );
 
+      console.logBytes(transaction);
     }
 
     function verifyTransactionInclusion(
         bytes32 txRoot,
         bytes[] memory txProof,
-        uint txIndex
+        bytes memory txIndex
     ) internal returns (bytes memory transaction) {
-        bytes memory transaction = MPT.verifyLeaf(txRoot, txIndex, txProof);
-        return transaction;
+        transaction = MPT.verifyLeaf(txRoot, txIndex, txProof);
     }
 
     function verifyL3State(
@@ -75,7 +71,7 @@ contract ClaimNFT is StorageVerifier {
         bytes[] memory stateProof,
         bytes[] memory storageProof
     ) internal {
-        uint256 l3StateTrieKey = uint256(keccak256(abi.encodePacked(historyProverAddress)));
+        bytes memory l3StateTrieKey = abi.encode(keccak256(abi.encodePacked(historyProverAddress)));
 
         bytes memory accountBytes = MPT.verifyLeaf(l3StateRoot, l3StateTrieKey, stateProof);
         RLPReader.RLPItem[] memory account = accountBytes.toRlpItem().toList();
