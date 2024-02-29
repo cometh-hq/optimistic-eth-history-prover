@@ -14,7 +14,7 @@ async fn main() -> eyre::Result<()> {
 
 
     let rpc_url = "https://stylus-testnet.arbitrum.io/rpc".to_string();
-    let program_address = "0x3437eE5D96278B9Bf26DB8a1E3056058dB231820".to_string();
+    let program_address = "0x6023974F44AE50635feEAaF9DEF6405f10299610".to_string();
     let privkey = "0x".to_string();
 
     abigen!(
@@ -39,11 +39,13 @@ async fn main() -> eyre::Result<()> {
     let history_prover = HistoryProver::new(address, client);
 
     // hash and block_number for block 1
-    let block_hash: [u8; 32] = hex::decode("88e96d4537bea4d9c05d12549907b32561d3bf31f45aae734cdc119f13406cb6").unwrap().try_into().unwrap();
-    let block_number = U256::from(1);
+    let block_hash: [u8; 32] = hex::decode("f294daaf296ac9f64a944ed11de0e090b3a3de5402b2cfc5c3216f09e9071f2d").unwrap().try_into().unwrap();
+    let block_hash_bis: [u8; 32] = hex::decode("5eb3e5223cfd9e10a5408784153d7aff9cd4528cfdb431df82deafdcf54210ed").unwrap().try_into().unwrap();
+    let block_number = U256::from(5387881);
 
 
-    let first_tx = history_prover.set_block_hash(block_number, block_hash).send().await?.await?;
+    let first_tx = history_prover.set_block_hash(U256::from(5387881), block_hash).send().await?.await?;
+    let first_tx = history_prover.set_block_hash(U256::from(5387614), block_hash_bis).send().await?.await?;
     println!("First Tx = {:?}", first_tx);
 
     Ok(())
