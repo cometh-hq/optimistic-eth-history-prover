@@ -106,6 +106,12 @@ impl HistoryProver {
         Ok(())
     }
 
+    pub fn get_block_hash(&mut self, block_number: U256)-> Result<FixedBytes<32>, Vec<u8>> {
+        let block_hash:FixedBytes<32>  = self.block_hash.get(block_number); 
+
+        Ok(block_hash)
+    }
+
     pub fn verify_execution_payload_header(&mut self, execution_payload_header: Vec<u8> ) -> Result<(), Vec<u8>>{
 
         let header: Header = Header::decode(&mut execution_payload_header.as_slice()).unwrap();
@@ -124,12 +130,9 @@ impl HistoryProver {
         if block_number == U256::from(0){
             return Ok(())
         }
-    
-        let mut new_block_hash = self.block_hash.setter(block_number - U256::from(1));
-        new_block_hash.set(parent_hash.into());
 
-        evm::log(BlockHashSet { block_number:block_number - U256::from(1), block_hash:parent_hash });
-    
+        let _ = self.set_block_hash(block_number - U256::from(1), parent_hash.into());
+
         Ok(())
     }
    
