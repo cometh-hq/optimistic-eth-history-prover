@@ -13,21 +13,22 @@ library TransactionHasher {
 
   error InvalidTransactionType(bytes1 txType);
 
-  function hash(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {
+  function hash(bytes memory rawTx) public pure returns (bytes32 hashed, address signer, uint256 nonce) {
     if (rawTx[0] >= 0xc0) {
-       (hashed, signer) = hashLegacy(rawTx);
+       return hashLegacy(rawTx);
     } else if (rawTx[0] == 0x01) {
-       (hashed, signer) = hash2930(rawTx);
+       return hash2930(rawTx);
     } else if (rawTx[0] == 0x02) {
-       (hashed, signer) = hash1559(rawTx);
+       return hash1559(rawTx);
     } else if (rawTx[0] == 0x03) {
-       (hashed, signer) = hash4844(rawTx);
+       return hash4844(rawTx);
     } else {
       revert InvalidTransactionType(rawTx[0]);
     }
   }
 
-  function hash4844(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {
+  function hash4844(bytes memory rawTx) public pure returns (bytes32 hashed, address signer, uint256 nonce) {
+    // BLOB_TX_TYPE || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data, access_list, max_fee_per_blob_gas, blob_versioned_hashes])
     RLPReader.RLPItem[] memory transaction = rawTx.toRlpItemWithOffset(1).toList();
 
     bytes[] memory toEncode = new bytes[](11);
@@ -43,9 +44,11 @@ library TransactionHasher {
     bytes32 s = bytes32(transaction[13].toUint());
 
     signer = ecrecover(hashed, uint8(v), r, s);
+    nonce = transaction[1].toUint();
   }
 
-  function hash1559(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {
+  function hash1559(bytes memory rawTx) public pure returns (bytes32 hashed, address signer, uint256 nonce) {
+    // 0x02 || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, destination, amount, data, access_list])
     RLPReader.RLPItem[] memory transaction = rawTx.toRlpItemWithOffset(1).toList();
 
     bytes[] memory toEncode = new bytes[](9);
@@ -61,9 +64,11 @@ library TransactionHasher {
     bytes32 s = bytes32(transaction[11].toUint());
 
     signer = ecrecover(hashed, uint8(v), r, s);
+    nonce = transaction[1].toUint();
   }
 
-  function hash2930(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {
+  function hash2930(bytes memory rawTx) public pure returns (bytes32 hashed, address signer, uint256 nonce) {
+    // 0x01 || rlp([chainId, nonce, gasPrice, gasLimit, to, value, data, accessList, signatureYParity, signatureR, signatureS]).
     RLPReader.RLPItem[] memory transaction = rawTx.toRlpItemWithOffset(1).toList();
 
     bytes[] memory toEncode = new bytes[](8);
@@ -79,9 +84,10 @@ library TransactionHasher {
     bytes32 s = bytes32(transaction[10].toUint());
 
     signer = ecrecover(hashed, uint8(v), r, s);
+    nonce = transaction[1].toUint();
   }
 
-  function hashLegacy(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {
+  function hashLegacy(bytes memory rawTx) public pure returns (bytes32 hashed, address signer, uint256 nonce) {
     RLPReader.RLPItem[] memory transaction = rawTx.toRlpItem().toList();
 
     // (nonce, gasprice, startgas, to, value, data)
@@ -110,5 +116,6 @@ library TransactionHasher {
 
     hashed = keccak256(toHash);
     signer = ecrecover(hashed, uint8(v), r, s);
+    nonce = transaction[0].toUint();
   }
 }

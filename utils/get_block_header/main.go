@@ -13,12 +13,12 @@ import (
 
 func main() {
   ctx := context.Background()
-  client, err := ethclient.Dial("https://mainnet.infura.io/v3/fe615a739b56483f84597cd983434259")
+  client, err := ethclient.Dial("https://sepolia.infura.io/v3/fe615a739b56483f84597cd983434259")
   if err != nil {
     panic(err)
   }
 
-  block, err := client.BlockByNumber(ctx, big.NewInt(10593417))
+  block, err := client.BlockByNumber(ctx, big.NewInt(5357043))
   if err != nil {
     panic(err)
   }

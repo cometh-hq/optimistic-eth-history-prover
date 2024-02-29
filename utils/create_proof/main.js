@@ -25,10 +25,10 @@ const stylusTestnet = defineChain({
 })
 
 async function main() {
-  const l1BlockNumber = 1_000_000;
-  const l3BlockNumber = 1045473;
+  const l1BlockNumber = 5357043;
+  const l3BlockNumber = 1050527;
   
-  const historyProverAddress = '0xDf859c81287DD1aAcA02d3F56Eaa4dD3C5615EA3';
+  const historyProverAddress = '0x6023974F44AE50635feEAaF9DEF6405f10299610';
 
   const client = createPublicClient({ chain: stylusTestnet, transport: http() });
 

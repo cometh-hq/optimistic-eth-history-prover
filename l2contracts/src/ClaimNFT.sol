@@ -4,6 +4,7 @@ pragma solidity >=0.8.0;
 import "forge-std/console.sol";
 import {MPT} from "./libs/MPT.sol";
 import {StorageVerifier} from "./libs/StorageVerifier.sol";
+import {TransactionHasher} from "./libs/TransactionHasher.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {RLPReader} from "./libs/RLPReader.sol";
 
@@ -13,46 +14,52 @@ contract ClaimNFT is StorageVerifier {
 
     address immutable public historyProverAddress;
 
+    struct TxProof {
+      // L1 Block header that contains the transaction signed by msg.sender
+      bytes l1BlockHeader;
+      // index of the transaction signed by msg.sender inside the block
+      bytes txIndex;
+      // Proof of the history contract storage layout on L3
+      bytes[] l3StateProof;
+      // Proof of the storage slot of the L1 block hash in the history prover contract
+      bytes[] historyContractStorageProof;
+      // Proof of inclusion of the transaction signed by msg.sender inside the L1 block
+      bytes[] txProof;
+    }
+
     constructor(address _historyProverAddress) {
       historyProverAddress = _historyProverAddress;
     }
 
     function claim(
-      // L1 Block header that contains the transaction signed by msg.sender
-      bytes memory l1BlockHeader,
-      // index of the transaction signed by msg.sender inside the block
-      bytes memory txIndex,
       // State root of the L3 where history prover contract is deployed
       bytes32 l3StateRoot,
-      // Proof of the history contract storage layout on L3
-      bytes[] memory l3StateProof,
-      // Proof of the storage slot of the L1 block hash in the history prover contract
-      bytes[] memory historyContractStorageProof,
-      // Proof of inclusion of the transaction signed by msg.sender inside the L1 block
-      bytes[] memory txProof
+      TxProof memory firstTxProof,
+      TxProof memory secondTxProof
     ) external {
-      RLPReader.RLPItem[] memory l1Header = l1BlockHeader.toRlpItem().toList();
+      (address firstTxSigner, uint256 firstTxNonce, uint256 firstTxBlockNumber) =
+        verifyTransaction(l3StateRoot, firstTxProof);
+      (address secondTxSigner, uint256 secondTxNonce, uint256 secondTxBlockNumber) =
+        verifyTransaction(l3StateRoot, firstTxProof);
+    }
 
-      uint256 l1BlockNumber = l1Header[8].toUint();
-      bytes32 txRoot = bytes32(l1Header[4].toUint());
-
-      bytes32 l1BlockHash = keccak256(l1BlockHeader);
+    function verifyTransaction(bytes32 l3StateRoot, TxProof memory txProof) internal returns (address txSigner, uint256 txNonce, uint256 l1BlockNumber) {
+      RLPReader.RLPItem[] memory l1Header = txProof.l1BlockHeader.toRlpItem().toList();
+      l1BlockNumber = l1Header[8].toUint();
+      bytes32 l1BlockHash = keccak256(txProof.l1BlockHeader);
 
       verifyL3State(
         l1BlockNumber,
         l1BlockHash,
         l3StateRoot,
-        l3StateProof,
-        historyContractStorageProof
+        txProof.l3StateProof,
+        txProof.historyContractStorageProof
       );
 
-      bytes memory transaction = verifyTransactionInclusion(
-        txRoot,
-        txProof, 
-        txIndex
-      );
-
-      console.logBytes(transaction);
+      bytes32 txRoot = bytes32(l1Header[4].toUint());
+      bytes memory transaction = verifyTransactionInclusion(txRoot, txProof.txProof, txProof.txIndex);
+      bytes32 txHash;
+      (txHash, txSigner, txNonce) = TransactionHasher.hash(transaction);
     }
 
     function verifyTransactionInclusion(
