@@ -13,12 +13,33 @@ import { BaseTrie as Trie } from "merkle-patricia-tree";
 import { serializeTransaction, toHex } from "viem";
 import { mainnet } from "viem/chains";
 import { Button, Typography } from "@alembic/ui";
-import { useWriteContract } from "wagmi";
+import { useContractWrite, useContractRead } from "wagmi";
+import Ranking from "./components/Ranking";
+import { shortenEthAddress } from "./lib/utils/utils";
 
 export default function Home() {
+  const [currentOwner, setCurrentOwner] = useState(
+    shortenEthAddress("0x5098197f5A517391Fe67A3E22bD9C3760EFA4909")
+  );
   const [firstTransactionDate, setFirstTransactionDate] = useState("");
   const { isConnected, address } = useAccount();
-  const { writeContract } = useWriteContract();
+  /*  const { write } = useContractWrite({
+    abi,
+    address: "0x6b175474e89094c44da98b954eedeac495271d0f",
+    functionName: "claim",
+    args: [],
+  });
+
+  const {
+    data: owner,
+    isError,
+    isLoading,
+    refetch,
+  } = useContractRead({
+    address: "0xecb504d39723b0be0e3a9aa33d646642d1051ee1",
+    abi,
+    functionName: "ownerOf",
+  }); */
 
   const mainnetClient = usePublicClient({
     chainId: mainnet.id,
@@ -101,24 +122,20 @@ export default function Home() {
     isConnected ? getFirstTxDate() : setFirstTransactionDate("");
   }, [isConnected, mainnetClient]); // Only re-run the effect if count changes
 
-  const claimNft = () => {
-    /* @ts-ignore */
-    writeContract({
-      abi,
-      address: "0x6b175474e89094c44da98b954eedeac495271d0f",
-      functionName: "claim",
-      args: [],
-    });
+  /*  const claimNft = () => {
+    write();
   };
 
+  const getNftOwner = () => {
+    refetch();
+    setCurrentOwner(owner);
+  };
+ */
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex min-h-screen  flex-col items-center justify-between p-12">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
         <div className="flex justify-between">
-          <Typography
-            content={"Ethereum Optimistic History Prover"}
-            variant="h2"
-          />
+          <Typography content={"Storylus"} variant="h2" />
         </div>
 
         <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
@@ -137,53 +154,54 @@ export default function Home() {
           </a>
         </div>
       </div>
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/logo.png"
-          alt="logo"
-          width={180}
-          height={37}
-          priority
-        />
-        <div>
-          <div className="mb-4">
-            <Typography content={"Current Owner:"} variant="h6" />
-            <Typography content={"Ethereum OG"} variant="p" className="mb-2" />
-          </div>
-
+      <div>
+        <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
+          <Image
+            className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
+            src="/logo.png"
+            alt="logo"
+            width={180}
+            height={37}
+            priority
+          />
           <div>
-            <Typography content={"First tx date:"} variant="h6" />
-            <Typography
-              content={"February 11, 2016"}
-              variant="p"
-              className="mb-2"
-            />
+            <div className="mb-4">
+              <Typography content={"Current Owner:"} variant="h6" />
+              <Typography
+                content={`${currentOwner}`}
+                variant="p"
+                className="mb-2"
+              />
+            </div>
+
+            <div>
+              <Typography content={"Number of Txs:"} variant="h6" />
+              <Typography content={"15"} variant="p" className="mb-2" />
+            </div>
           </div>
         </div>
-      </div>
-      <div>
-        <h2 className="mb-3 mt-3 text-xl">{firstTransactionDate}</h2>
-        <ConnectWallet />
+        <div>
+          <h2 className="mb-3 mt-3 text-xl">{firstTransactionDate}</h2>
+          <ConnectWallet />
 
-        {isConnected && (
-          <div className="relative flex items-center gap-x-6 rounded-lg p-4">
-            <Button
-              onClick={() => {
-                claimNft();
-              }}
-              isPrimary={true}
-              isGlass={false}
-              isSecondary={false}
-            >
-              <Typography content="Claim OG NFT" />
-            </Button>
-          </div>
-        )}
-      </div>{" "}
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <h1>Ranking</h1>
+          {isConnected && (
+            <div className="relative flex items-center gap-x-6 rounded-lg p-4">
+              <Button
+                onClick={() => {
+                  claimNft();
+                }}
+                isPrimary={true}
+                isGlass={false}
+                isSecondary={false}
+              >
+                <Typography content="Claim OG NFT" />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
+
+      <Ranking />
     </main>
   );
 }
