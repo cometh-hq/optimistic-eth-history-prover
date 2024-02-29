@@ -6,15 +6,12 @@ import ConnectWallet from "./components/ConnectWallet";
 import { useAccount } from "wagmi";
 import { Alchemy, Network } from "alchemy-sdk";
 import { useEffect, useState } from "react";
-import { usePublicClient } from "wagmi";
 import RLP from "rlp";
 import level from "level-mem";
 import { BaseTrie as Trie } from "merkle-patricia-tree";
 import { serializeTransaction, toHex } from "viem";
-import { sepolia, mainnet } from "viem/chains";
 import { Button, Typography } from "@alembic/ui";
 import { useContractWrite, useContractRead } from "wagmi";
-import Ranking from "./components/Ranking";
 import { shortenEthAddress } from "./lib/utils/utils";
 import { ethers } from "ethers";
 
