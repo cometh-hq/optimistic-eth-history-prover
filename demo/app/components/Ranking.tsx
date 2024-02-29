@@ -35,7 +35,7 @@ function Ranking(): JSX.Element {
       </Grid>
       {Array.map((row) => {
         return (
-          <Grid container spacing={2}>
+          <Grid key={row.position} container spacing={2}>
             <Grid item sx={{ border: "1px solid black" }} xs={4}>
               {row.position}
             </Grid>

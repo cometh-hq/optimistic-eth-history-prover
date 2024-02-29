@@ -25,13 +25,7 @@ export default function Home() {
   const [firstTransactionDate, setFirstTransactionDate] = useState("");
   const { isConnected, address } = useAccount();
 
-  const sepoliaClient = usePublicClient({
-    chainId: sepolia.id,
-  });
-
   useEffect(() => {
-    if (!sepoliaClient) return;
-
     const getTxDuringEthDenver = async () => {
       const config = {
         apiKey: "CHSK86m4Q9RWyWaW6N_RB-IXHQZ663My",
@@ -65,8 +59,6 @@ export default function Home() {
         maxCount: "0x1",
         order: "desc",
       });
-
-      const network = "sepolia";
 
       const provider = new ethers.AlchemyProvider(
         "sepolia",
@@ -154,7 +146,36 @@ export default function Home() {
     };
 
     isConnected ? getTxDuringEthDenver() : setFirstTransactionDate("");
-  }, [isConnected, sepoliaClient]); // Only re-run the effect if count changes
+  }, [isConnected]); // Only re-run the effect if count changes
+
+  /*  const { write } = useContractWrite({
+    abi,
+    address: "0x6b175474e89094c44da98b954eedeac495271d0f",
+    functionName: "claim",
+    args: [],
+  });
+
+  const {
+    data: owner,
+    isError,
+    isLoading,
+    refetch,
+  } = useContractRead({
+    address: "0xecb504d39723b0be0e3a9aa33d646642d1051ee1",
+    abi,
+    functionName: "ownerOf",
+  }); */
+
+  const claimNft = () => {
+    //write();
+  };
+
+  /*
+  const getNftOwner = () => {
+    refetch();
+    setCurrentOwner(owner);
+  };
+ */
 
   return (
     <main className="flex min-h-screen  flex-col items-center justify-between p-12">
