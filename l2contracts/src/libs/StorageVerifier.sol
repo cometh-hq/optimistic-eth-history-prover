@@ -16,7 +16,7 @@ abstract contract StorageVerifier {
         MPT.StorageSlot memory contractSlot,
         bytes[] memory stateProof,
         bytes[] memory storageProof
-    ) internal {
+    ) internal pure {
         if (!MPT.verifyAccount(root, contractAccount, stateProof)) {
             revert InvalidStateProof();
         }

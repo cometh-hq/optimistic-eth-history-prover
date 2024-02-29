@@ -25,8 +25,8 @@ const stylusTestnet = defineChain({
 })
 
 async function main() {
-  const l1BlockNumber = 5357043;
-  const l3BlockNumber = 1050527;
+  const l1BlockNumber = 5387614;
+  const l3BlockNumber = 1050595;
   
   const historyProverAddress = '0x6023974F44AE50635feEAaF9DEF6405f10299610';
 

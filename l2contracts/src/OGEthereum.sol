@@ -8,8 +8,8 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 contract OGEthereum is ERC721, AccessControl {
     bytes32 public constant CLAIMER_ROLE = keccak256("CLAIMER_ROLE");
 
-    constructor(address claimer) ERC721("OGEthereum", "OG") {
-        _grantRole(CLAIMER_ROLE, claimer);
+    constructor() ERC721("OGEthereum", "OG") {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _safeMint(address(this), 0);
     }
 

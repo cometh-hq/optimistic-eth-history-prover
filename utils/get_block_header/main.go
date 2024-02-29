@@ -18,7 +18,7 @@ func main() {
     panic(err)
   }
 
-  block, err := client.BlockByNumber(ctx, big.NewInt(5357043))
+  block, err := client.BlockByNumber(ctx, big.NewInt(5387614))
   if err != nil {
     panic(err)
   }
@@ -30,7 +30,5 @@ func main() {
     panic(err)
   }
 
-  fmt.Println(block.Header().TxHash)
   fmt.Println(hexutil.Encode(buf.Bytes()))
-  fmt.Println(block.Header().Hash())
 }
