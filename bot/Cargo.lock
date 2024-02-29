@@ -1013,6 +1013,7 @@ dependencies = [
  "alloy-rlp",
  "ethers",
  "eyre",
+ "futures",
  "hex",
  "reth",
  "tokio",
