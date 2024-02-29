@@ -4,7 +4,6 @@ import Image from "next/image";
 
 import ConnectWallet from "./components/ConnectWallet";
 import { useAccount } from "wagmi";
-import { Transaction } from "./components/Transaction";
 import { Alchemy, Network } from "alchemy-sdk";
 import { useEffect, useState } from "react";
 import { usePublicClient } from "wagmi";
@@ -13,10 +12,13 @@ import level from "level-mem";
 import { BaseTrie as Trie } from "merkle-patricia-tree";
 import { serializeTransaction, toHex } from "viem";
 import { mainnet } from "viem/chains";
+import { Button, Typography } from "@alembic/ui";
+import { useWriteContract } from "wagmi";
 
 export default function Home() {
   const [firstTransactionDate, setFirstTransactionDate] = useState("");
   const { isConnected, address } = useAccount();
+  const { writeContract } = useWriteContract();
 
   const mainnetClient = usePublicClient({
     chainId: mainnet.id,
@@ -99,28 +101,38 @@ export default function Home() {
     isConnected ? getFirstTxDate() : setFirstTransactionDate("");
   }, [isConnected, mainnetClient]); // Only re-run the effect if count changes
 
+  const claimNft = () => {
+    /* @ts-ignore */
+    writeContract({
+      abi,
+      address: "0x6b175474e89094c44da98b954eedeac495271d0f",
+      functionName: "claim",
+      args: [],
+    });
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
+        <div className="flex justify-between">
+          <Typography
+            content={"Ethereum Optimistic History Prover"}
+            variant="h2"
+          />
+        </div>
+
         <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
           <a
             className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
+            href="https://github.com/cometh-hq/optimistic-eth-history-prover"
             target="_blank"
             rel="noopener noreferrer"
           >
-            By{" "}
             <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+              src={"/social/github.svg"}
+              alt={"Github"}
+              width={50}
+              height={50}
             />
           </a>
         </div>
@@ -134,88 +146,43 @@ export default function Home() {
           height={37}
           priority
         />
-        <h1>Ethereum OG</h1>
+        <div>
+          <div className="mb-4">
+            <Typography content={"Current Owner:"} variant="h6" />
+            <Typography content={"Ethereum OG"} variant="p" className="mb-2" />
+          </div>
+
+          <div>
+            <Typography content={"First tx date:"} variant="h6" />
+            <Typography
+              content={"February 11, 2016"}
+              variant="p"
+              className="mb-2"
+            />
+          </div>
+        </div>
       </div>
       <div>
         <h2 className="mb-3 mt-3 text-xl">{firstTransactionDate}</h2>
         <ConnectWallet />
 
-        {isConnected && <Transaction />}
+        {isConnected && (
+          <div className="relative flex items-center gap-x-6 rounded-lg p-4">
+            <Button
+              onClick={() => {
+                claimNft();
+              }}
+              isPrimary={true}
+              isGlass={false}
+              isSecondary={false}
+            >
+              <Typography content="Claim OG NFT" />
+            </Button>
+          </div>
+        )}
       </div>{" "}
-      <button
-        className="mt-1 flex h-11 py-2 px-4 gap-2 flex-none items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200"
-        //onClick={async () => await todo()}
-      >
-        Get Proof
-      </button>
       <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+        <h1>Ranking</h1>
       </div>
     </main>
   );

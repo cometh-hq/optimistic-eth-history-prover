@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@alembic/ui": "^1.5.4",
     "@ethereumjs/trie": "^6.1.1",
     "@radix-ui/react-icons": "^1.3.0",
     "@tanstack/react-query": "^5.24.1",
