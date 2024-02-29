@@ -11,6 +11,8 @@ library TransactionHasher {
   using RLPEncode for bytes[];
   using RLPEncode for bytes;
 
+  error InvalidTransactionType(bytes1 txType);
+
   function hash(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {
     if (rawTx[0] >= 0xc0) {
        (hashed, signer) = hashLegacy(rawTx);
@@ -18,7 +20,29 @@ library TransactionHasher {
        (hashed, signer) = hash2930(rawTx);
     } else if (rawTx[0] == 0x02) {
        (hashed, signer) = hash1559(rawTx);
+    } else if (rawTx[0] == 0x03) {
+       (hashed, signer) = hash4844(rawTx);
+    } else {
+      revert InvalidTransactionType(rawTx[0]);
     }
+  }
+
+  function hash4844(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {
+    RLPReader.RLPItem[] memory transaction = rawTx.toRlpItemWithOffset(1).toList();
+
+    bytes[] memory toEncode = new bytes[](11);
+    for (uint i = 0; i < 11; ++i) {
+      toEncode[i] = transaction[i].toRlpBytes();
+    }
+
+    bytes memory toHash = abi.encodePacked(uint8(3), RLPEncode.encodeList(toEncode));
+    hashed = keccak256(toHash);
+
+    uint256 v = 27 + transaction[11].toUint();
+    bytes32 r = bytes32(transaction[12].toUint());
+    bytes32 s = bytes32(transaction[13].toUint());
+
+    signer = ecrecover(hashed, uint8(v), r, s);
   }
 
   function hash1559(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {

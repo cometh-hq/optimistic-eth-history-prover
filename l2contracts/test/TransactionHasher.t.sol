@@ -50,4 +50,15 @@ contract TransactionHasherTest is Test {
       assertEq(hash, txHash);
       assertEq(signer, expectedSigner);
     }
+
+    function test_4844Hash() public {
+      bytes memory rawTx = hex"03f9010780028506fc23ac00850ba43b740082520894e72fd349164cbf0dd4367102b67d08c16ce4dc0b8080f893f8599400000000000c2e074ec69a0dfb2997ba6c7d2e1ef842a00000000000000000000000000000000000000000000000000000000000000004a00bcad17ecf260d6506c6b97768bdc2acfb6694445d27ffd3f9c1cfbee4a9bd6df7945ffc014343cd971b7eb70732021e26c35b744cc4e1a000000000000000000000000000000000000000000000000000000000000000018506fc23ac00c080a0faf1924664895657bdaff2cfdf08c22f6092ef095e4593e9689a885f937b37f4a0072f2e573244f0fac97ceccc5082e2de447f7ea1076f23b79584a0a41edba0ae";
+      bytes32 txHash = 0x56539f713c502c47935dd17c60910ff9e4048c0b08f6c9fa347287cc3ad71814;
+      address expectedSigner = 0xC2F33f9eb213f986f11b214fcaaDd6F32E23938F;
+
+      (bytes32 hash, address signer) = TransactionHasher.hash(rawTx);
+
+      assertEq(hash, txHash);
+      assertEq(signer, expectedSigner);
+    }
 }
