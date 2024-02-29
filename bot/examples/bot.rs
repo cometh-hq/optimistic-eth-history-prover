@@ -14,7 +14,7 @@ use alloy_rlp::{Encodable};
 async fn main() -> eyre::Result<()> {
 
     let rpc_url = "https://stylus-testnet.arbitrum.io/rpc".to_string();
-    let program_address = "0x3437eE5D96278B9Bf26DB8a1E3056058dB231820".to_string();
+    let program_address = "0x6023974F44AE50635feEAaF9DEF6405f10299610".to_string();
     let privkey = "0x".to_string();
 
     abigen!(
@@ -39,7 +39,7 @@ async fn main() -> eyre::Result<()> {
     let history_prover = HistoryProver::new(address, client);
 
     //latest block indexed
-    let mut block_number = 19299869;
+    let mut block_number = 5387881;
 
     loop{
         let rpc_mainnet = "".to_string();
@@ -91,11 +91,11 @@ async fn main() -> eyre::Result<()> {
 
         let second_tx = history_prover.verify_execution_payload_header(data.into()).send().await?.await?;
     
-        println!("Block Number: {:?}", block_number);
+        println!("Block Number indexed: {:?}", block_number);
         block_number -= 1;
     
 
-        if block_number == 0 {
+        if block_number == 5348474 {
             println!("Iteration done");
             break;
         } 
