@@ -7,7 +7,7 @@ extern crate alloc;
 #[global_allocator]
 static ALLOC: mini_alloc::MiniAlloc = mini_alloc::MiniAlloc::INIT;
 
-use stylus_sdk::{alloy_primitives::{U256, FixedBytes, keccak256}, alloy_sol_types::sol, evm,  prelude::*};
+use stylus_sdk::{abi::Bytes, alloy_primitives::{U256, FixedBytes, keccak256},  alloy_sol_types::sol, evm,  prelude::*};
 use alloy_rlp::{Decodable};
 
 
@@ -106,13 +106,8 @@ impl HistoryProver {
         Ok(())
     }
 
-    pub fn get_block_hash(&mut self, block_number: U256)-> Result<FixedBytes<32>, Vec<u8>> {
-        let block_hash:FixedBytes<32>  = self.block_hash.get(block_number); 
 
-        Ok(block_hash)
-    }
-
-    pub fn verify_execution_payload_header(&mut self, execution_payload_header: Vec<u8> ) -> Result<(), Vec<u8>>{
+    pub fn verify_execution_payload_header(&mut self, execution_payload_header: Bytes) -> Result<(), Vec<u8>>{
 
         let header: Header = Header::decode(&mut execution_payload_header.as_slice()).unwrap();
     

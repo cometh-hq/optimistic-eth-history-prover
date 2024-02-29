@@ -14,14 +14,14 @@ async fn main() -> eyre::Result<()> {
 
 
     let rpc_url = "https://stylus-testnet.arbitrum.io/rpc".to_string();
-    let program_address = "0xDf859c81287DD1aAcA02d3F56Eaa4dD3C5615EA3".to_string();
+    let program_address = "0x3437eE5D96278B9Bf26DB8a1E3056058dB231820".to_string();
     let privkey = "0x".to_string();
 
     abigen!(
         HistoryProver,
         r#"[
             function setBlockHash(uint256 block_number, bytes32 block_hash) external;
-            function verifyExecutionPayloadHeader(uint8[] memory execution_payload_header) external;
+            function verifyExecutionPayloadHeader(bytes calldata execution_payload_header) external;
         ]"#
     );
 
