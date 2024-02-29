@@ -136,7 +136,7 @@ export default function Home() {
         console.log("block", block.hash, parseInt(block.number, 16));
         console.log("user tx", userTx.hash);
         console.log("PROOF");
-        console.log(proof.map(toHex));
+        /*         console.log(proof.map(toHex)); */
       }
 
       console.log("--End Proof Computation--");
