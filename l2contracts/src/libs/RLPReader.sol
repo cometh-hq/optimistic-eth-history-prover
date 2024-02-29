@@ -62,6 +62,18 @@ library RLPReader {
         return RLPItem(item.length, memPtr);
     }
 
+    function toRlpItemWithOffset(
+        bytes memory item,
+        uint256 offset
+    ) internal pure returns (RLPItem memory) {
+        uint256 memPtr;
+        assembly {
+            memPtr := add(item, add(0x20, offset))
+        }
+
+        return RLPItem(item.length - offset, memPtr);
+    }
+
     /*
      * @dev Create an iterator. Reverts if item is not a list.
      * @param self The RLP item.

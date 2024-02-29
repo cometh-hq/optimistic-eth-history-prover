@@ -11,13 +11,53 @@ library TransactionHasher {
   using RLPEncode for bytes[];
   using RLPEncode for bytes;
 
-  function hash(bytes memory rawTx) public view returns (bytes32 hashed, address signer) {
+  function hash(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {
     if (rawTx[0] >= 0xc0) {
        (hashed, signer) = hashLegacy(rawTx);
+    } else if (rawTx[0] == 0x01) {
+       (hashed, signer) = hash2930(rawTx);
+    } else if (rawTx[0] == 0x02) {
+       (hashed, signer) = hash1559(rawTx);
     }
   }
 
-  function hashLegacy(bytes memory rawTx) public view returns (bytes32 hashed, address signer) {
+  function hash1559(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {
+    RLPReader.RLPItem[] memory transaction = rawTx.toRlpItemWithOffset(1).toList();
+
+    bytes[] memory toEncode = new bytes[](9);
+    for (uint i = 0; i < 9; ++i) {
+      toEncode[i] = transaction[i].toRlpBytes();
+    }
+
+    bytes memory toHash = abi.encodePacked(uint8(2), RLPEncode.encodeList(toEncode));
+    hashed = keccak256(toHash);
+
+    uint256 v = 27 + transaction[9].toUint();
+    bytes32 r = bytes32(transaction[10].toUint());
+    bytes32 s = bytes32(transaction[11].toUint());
+
+    signer = ecrecover(hashed, uint8(v), r, s);
+  }
+
+  function hash2930(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {
+    RLPReader.RLPItem[] memory transaction = rawTx.toRlpItemWithOffset(1).toList();
+
+    bytes[] memory toEncode = new bytes[](8);
+    for (uint i = 0; i < 8; ++i) {
+      toEncode[i] = transaction[i].toRlpBytes();
+    }
+
+    bytes memory toHash = abi.encodePacked(uint8(1), RLPEncode.encodeList(toEncode));
+    hashed = keccak256(toHash);
+
+    uint256 v = 27 + transaction[8].toUint();
+    bytes32 r = bytes32(transaction[9].toUint());
+    bytes32 s = bytes32(transaction[10].toUint());
+
+    signer = ecrecover(hashed, uint8(v), r, s);
+  }
+
+  function hashLegacy(bytes memory rawTx) public pure returns (bytes32 hashed, address signer) {
     RLPReader.RLPItem[] memory transaction = rawTx.toRlpItem().toList();
 
     // (nonce, gasprice, startgas, to, value, data)
@@ -32,7 +72,7 @@ library TransactionHasher {
 
     bytes[] memory toEncode = new bytes[](len);
     for (uint i = 0; i < 6; ++i) {
-      toEncode[i] = transaction[i].toBytes().encodeBytes();
+      toEncode[i] = transaction[i].toRlpBytes();
     }
     if (v > 28) {
       uint chainId = (v - 35) / 2;
@@ -46,8 +86,5 @@ library TransactionHasher {
 
     hashed = keccak256(toHash);
     signer = ecrecover(hashed, uint8(v), r, s);
-    console.logBytes(toHash);
-    console.logBytes32(hashed);
-    console.logAddress(signer);
   }
 }
