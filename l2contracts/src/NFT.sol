@@ -1,59 +1,32 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.10;
+// SPDX-License-Identifier: MIT
+// Compatible with OpenZeppelin Contracts ^5.0.0
+pragma solidity ^0.8.20;
 
-import "solmate/tokens/ERC721.sol";
-import "openzeppelin-contracts/contracts/utils/Strings.sol";
-import "openzeppelin-contracts/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-error MintPriceNotPaid();
-error MaxSupply();
-error NonExistentTokenURI();
-error WithdrawTransfer();
+contract OGEthereum is ERC721, AccessControl {
+    bytes32 public constant CLAIMER_ROLE = keccak256("CLAIMER_ROLE");
 
-contract NFT is ERC721, Ownable {
-    using Strings for uint256;
-    string public baseURI;
-    uint256 public currentTokenId;
-    uint256 public constant TOTAL_SUPPLY = 10_000;
-    uint256 public constant MINT_PRICE = 0.08 ether;
-
-    constructor(
-        string memory _name,
-        string memory _symbol,
-        string memory _baseURI
-    ) ERC721(_name, _symbol) Ownable(msg.sender) {
-        baseURI = _baseURI;
+    constructor(address claimer) ERC721("OGEthereum", "OG") {
+        _grantRole(CLAIMER_ROLE, claimer);
+        _safeMint(address(this), 0);
     }
 
-    function mintTo(address recipient) public payable returns (uint256) {
-        if (msg.value != MINT_PRICE) {
-            revert MintPriceNotPaid();
-        }
-        uint256 newTokenId = ++currentTokenId;
-        if (newTokenId > TOTAL_SUPPLY) {
-            revert MaxSupply();
-        }
-        _safeMint(recipient, newTokenId);
-        return newTokenId;
+    function _baseURI() internal pure override returns (string memory) {
+        return "https://www.google.com/search";
     }
 
-    function tokenURI(
-        uint256 tokenId
-    ) public view virtual override returns (string memory) {
-        if (ownerOf(tokenId) == address(0)) {
-            revert NonExistentTokenURI();
-        }
-        return
-            bytes(baseURI).length > 0
-                ? string(abi.encodePacked(baseURI, tokenId.toString()))
-                : "";
+    function transferOG(address recipient) public onlyRole(CLAIMER_ROLE) {
+        _update(recipient, 0, address(0));
     }
 
-    function withdrawPayments(address payable payee) external onlyOwner {
-        uint256 balance = address(this).balance;
-        (bool transferTx, ) = payee.call{value: balance}("");
-        if (!transferTx) {
-            revert WithdrawTransfer();
-        }
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }
