@@ -175,7 +175,7 @@ export default function Home() {
  */
 
   return (
-    <main className="flex min-h-screen  flex-col items-center justify-start p-10">
+    <main className="flex min-h-screen  flex-col items-center justify-start text-center p-10">
       <div className="flex flex-col justify-center items-center ">
         <Image
           className="mb-2"
@@ -234,7 +234,7 @@ export default function Home() {
             />
           </div>
 
-          <div>
+          <div className=" text-left">
             <Typography content={`Score to beat: ${"65 txs"}`} variant="p" />
             <Typography
               content={`NFT Owner: ${shortenEthAddress(
@@ -246,16 +246,16 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <div className="flex flex-col  justify-center items-center text-center mt-4">
-        <div className="flex w-1/2 mb-6 text-center justify-center items-center">
+      <div className="w-full md:w-1/2 flex flex-col justify-center items-center text-center mt-4">
+        <div className="flex  mb-6 text-center justify-center items-center">
           <Typography
             content={
-              "The NFT is transferred only if an address  prove on-chain that it has made more transactions than the current owner between feb 23 - 10am (Block 5348475) to feb 29 - 8am (Block 5387881)"
+              "The NFT is transferred only if an address proves on-chain that it has made more transactions than the current owner between feb 23 - 10am (Block 5348475) to feb 29 - 8am (Block 5387881)"
             }
             variant="p"
           />
         </div>
-        <div className="flex w-1/2 text-center justify-center items-center">
+        <div className="flex text-center justify-center items-center">
           <a
             className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
             href="https://github.com/cometh-hq/optimistic-eth-history-prover"
