@@ -1,2 +1,4 @@
-export const shortenEthAddress = (address: string) =>
-  `${address?.substring(0, 6)}...${address?.substring(42 - 4)}`;
+export const shortenEthAddress = (address: string) => {
+  const s = address?.toString();
+  return `${s?.substring(0, 6)}...${s?.substring(42 - 4)}`;
+}

@@ -1,121 +1,162 @@
 "use client";
 
+import RLP from "rlp";
+import { ethers } from "ethers";
 import Image from "next/image";
 
 import ConnectWallet from "./components/ConnectWallet";
 import { useAccount } from "wagmi";
-import { Alchemy, Network } from "alchemy-sdk";
-import { useEffect, useState } from "react";
-import RLP from "rlp";
-import level from "level-mem";
-import { BaseTrie as Trie } from "merkle-patricia-tree";
-import { serializeTransaction, toHex } from "viem";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { toHex } from "viem";
 import { Button, Typography } from "@alembic/ui";
 import { useContractWrite, useContractRead } from "wagmi";
 import { shortenEthAddress } from "./lib/utils/utils";
-import { ethers } from "ethers";
+import { getTxHashInBlockRange } from "./lib/utils/alchemy";
+import { computeTxMerkleTrie } from "./lib/utils/trie";
+
+
+const fromBlock = 5348475; // Feb-23-2024 05:00:00 PM +UTC
+const toBlock = 5387881; // Feb-29-2024 01:51:00 PM +UTC
+
+const nftAddress = "0x815Ccb32658CA148742208153C4FCEB919762828";
+const claimerAddress = "0x2109514fE223CFb6ae1862c1C25EaEb47a14605B";
+const historyProverAddress = "0x9DFBC5488CDE99Bfd45a541C7E04988C2c846731";
+
+const provider = new ethers.AlchemyProvider(
+  "sepolia",
+  "CHSK86m4Q9RWyWaW6N_RB-IXHQZ663My"
+);
+
+const arbitrumProvider = new ethers.JsonRpcProvider(
+  "https://sepolia-rollup.arbitrum.io/rpc", 421614
+);
+
+const stylusProvider = new ethers.JsonRpcProvider(
+  "https://stylus-testnet.arbitrum.io/rpc", 23011913
+);
 
 export default function Home() {
-  const [currentOwner, setCurrentOwner] = useState(
-    shortenEthAddress("0x5098197f5A517391Fe67A3E22bD9C3760EFA4909")
-  );
-  const [firstTransactionDate, setFirstTransactionDate] = useState("");
   const { isConnected, address } = useAccount();
+  
+  const [loadingInfo, setLoadingInfo] = useState(true);
+  const [currentOwner, setCurrentOwner] = useState();
+  const [currentMax, setCurrentMax] = useState();
+
+  const [loadingTxs, setLoadingTxs] = useState(false);
+  const [firstTx, setFirstTx] = useState();
+  const [secondTx, setSecondTx] = useState();
+
+  const [loadingBlocks, setLoadingBlocks] = useState();
+
+  const score = useMemo(() => {
+    if (!firstTx || !secondTx) return 0;
+
+    return secondTx.nonce - firstTx.nonce;
+  }, [firstTx, secondTx])
+
+  const canClaim = useMemo(() => {
+    if (loadingInfo) return false;
+    
+    return score > currentMax;
+  }, [loadingInfo, currentMax, score])
 
   useEffect(() => {
-    const getTxDuringEthDenver = async () => {
-      const config = {
-        apiKey: "CHSK86m4Q9RWyWaW6N_RB-IXHQZ663My",
-        network: Network.ETH_SEPOLIA,
-      };
-      const alchemy = new Alchemy(config);
+    if (!address || !address.length) return;
+    setLoadingTxs(true);
+  }, [address]);
 
-      const fromBlock = 5346200; // Feb-23-2024 08:35:36 AM +UTC
-      const toBlock = 5387881; // Feb-29-2024 01:51:00 PM +UTC
+  useEffect(() => {
+    if (!loadingInfo) return;
 
-      /* @ts-ignore */
-      const firstTxdata = await alchemy.core.getAssetTransfers({
-        fromBlock: fromBlock,
-        toBlock: toBlock,
-        fromAddress: address,
-        category: ["external", "internal", "erc20", "erc721", "erc1155"],
-        excludeZeroValue: false,
-        maxCount: "0x1",
-        order: "asc",
+    async function loadContractInfo() {
+      const nftOwner32 = await arbitrumProvider.call({
+        to: nftAddress,
+        // ownerOf(uint256(0))
+        data: "0x6352211e0000000000000000000000000000000000000000000000000000000000000000",
       });
+      const nftOwner = ethers.AbiCoder.defaultAbiCoder().decode(['address'], nftOwner32);
+      setCurrentOwner(nftOwner);
 
-      if (firstTxdata.transfers.length == 0) return; // todo manage the NO TX Case
-
-      /* @ts-ignore */
-      const lastTxdata = await alchemy.core.getAssetTransfers({
-        fromBlock: fromBlock,
-        toBlock: toBlock,
-        fromAddress: address,
-        category: ["external", "internal", "erc20", "erc721", "erc1155"],
-        excludeZeroValue: false,
-        maxCount: "0x1",
-        order: "desc",
+      const currentMax32 = await arbitrumProvider.call({
+        to: claimerAddress,
+        // maxTxCount()
+        data: "0x211c22be",
       });
+      const currentMax = ethers.AbiCoder.defaultAbiCoder().decode(['uint256'], currentMax32);
+      setCurrentMax(Number(currentMax));
 
-      const provider = new ethers.AlchemyProvider(
-        "sepolia",
-        "CHSK86m4Q9RWyWaW6N_RB-IXHQZ663My"
-      );
-      const firstBlock = await provider.send("eth_getBlockByNumber", [
-        firstTxdata.transfers[0].blockNum,
-        true,
+      setLoadingInfo(false);
+    }
+    loadContractInfo().catch(console.error);
+  }, [loadingInfo]);
+
+  useEffect(() => {
+    if (!address || !address.length) return;
+    if (!loadingTxs) return;
+
+    async function loadTxs() {
+      const [first, second] = await Promise.all([
+          getTxHashInBlockRange(address, fromBlock, toBlock, 'asc'),
+          getTxHashInBlockRange(address, fromBlock, toBlock, 'desc'),
       ]);
 
-      const lastBlock = await provider.send("eth_getBlockByNumber", [
-        lastTxdata.transfers[0].blockNum,
-        true,
+      // if first is set, second has to be set as well. So we check only first
+      if (!first) {
+        setLoadingTxs(false);
+        return;
+      }
+
+      const [firstTxInfo, secondTxInfo] = await Promise.all([
+        provider.getTransaction(first.hash),
+        provider.getTransaction(second.hash),
       ]);
 
-      const firstTransaction = firstBlock.transactions.find(
-        (v: any) => v.hash === firstTxdata.transfers[0].hash
-      );
+      setFirstTx(firstTxInfo);
+      setSecondTx(secondTxInfo);
+      
+      setLoadingTxs(false);
+    }
+    loadTxs().catch(console.error);
+  }, [loadingTxs, address]);
 
-      const lastTransaction = lastBlock.transactions.find(
-        (v: any) => v.hash === lastTxdata.transfers[0].hash
-      );
+  const claimNft = useCallback(async () => {
+      if (!firstTx || !secondTx) return;
+      
+      const [firstBlock, secondBlock, lastL3Block] = await Promise.all([
+          provider.send("eth_getBlockByNumber", [ethers.toBeHex(firstTx.blockNumber), true]),
+          provider.send("eth_getBlockByNumber", [ethers.toBeHex(secondTx.blockNumber), true]),
+          stylusProvider.getBlock('latest'),
+      ]);
 
-      const blocks = [firstBlock, lastBlock];
-      const proofs = [];
+      const [firstTrie, secondTrie] = await Promise.all([
+        computeTxMerkleTrie(firstBlock),
+        computeTxMerkleTrie(secondBlock),
+      ]);
 
-      console.log("--Start Proof Computation--");
-
-      for (const block of blocks) {
-        const userTx = proofs.length == 0 ? firstTransaction : lastTransaction;
-
-        console.log(
-          `processing block: ${block.number} for txHash: ${userTx.hash}`
+      const storageSlot = (blockNumber: number) => {
+        return ethers.keccak256(
+          ethers.AbiCoder.defaultAbiCoder().encode(['uint256', 'uint256'], [blockNumber, 0])
         );
-        const db = level();
-        const trie = new Trie(db);
+      }
 
-        for (const tx of block.transactions) {
-          const key = toHex(RLP.encode(parseInt(tx.transactionIndex, 16)));
+      const getProof = (blockNumber: number) =>
+        stylusProvider.send(
+          "eth_getProof",
+          [historyProverAddress, [storageSlot(blockNumber)], ethers.toBeHex(lastL3Block.number)], 
+        );
 
-          tx.data = tx.input;
-          tx.type = parseInt(tx.type, 16);
-          tx.gasLimit = tx.gas;
+      const [firstProof, secondProof] = await Promise.all([
+        getProof(firstBlock.number),
+        getProof(secondBlock.number),
+      ]);
 
-          tx.signature = ethers.Signature.from({
-            r: tx.r,
-            s: tx.s,
-            v: tx.v,
-          });
+      console.log(firstBlock.number, firstProof);
+      console.log(secondBlock.number, secondProof);
 
-          const value = ethers.Transaction.from(tx).serialized;
-          //console.log("txHash:", transaction.hash);
-          //  console.log("value:", value);
-          await trie.put(
-            Buffer.from(key.slice(2), "hex"),
-            Buffer.from(value.slice(2), "hex")
-          );
-        }
+  }, [firstTx, secondTx]);
 
-        const sKey = toHex(RLP.encode(userTx.transactionIndex));
+/*
+      const sKey = toHex(RLP.encode(userTx.transactionIndex));
 
         const proof = await Trie.createProof(
           trie,
@@ -130,49 +171,9 @@ export default function Home() {
 
         proofs.push([Buffer.from(sKey.slice(2), "hex"), proof]);
 
-        console.log("block", block.hash, parseInt(block.number, 16));
-        console.log("user tx", userTx.hash);
-        console.log("PROOF");
-        /*         console.log(proof.map(toHex)); */
-      }
-
-      console.log("--End Proof Computation--");
-
-      //let date = new Date(Number(block.timestamp) * 1000);
-      //setFirstTransactionDate("First tx: " + date.toDateString());
     };
-
-    isConnected ? getTxDuringEthDenver() : setFirstTransactionDate("");
   }, [isConnected]); // Only re-run the effect if count changes
-
-  /*  const { write } = useContractWrite({
-    abi,
-    address: "0x6b175474e89094c44da98b954eedeac495271d0f",
-    functionName: "claim",
-    args: [],
-  });
-
-  const {
-    data: owner,
-    isError,
-    isLoading,
-    refetch,
-  } = useContractRead({
-    address: "0xecb504d39723b0be0e3a9aa33d646642d1051ee1",
-    abi,
-    functionName: "ownerOf",
-  }); */
-
-  const claimNft = () => {
-    //write();
-  };
-
-  /*
-  const getNftOwner = () => {
-    refetch();
-    setCurrentOwner(owner);
-  };
- */
+  */
 
   return (
     <main className="flex min-h-screen  flex-col items-center justify-start text-center p-10">
@@ -207,25 +208,41 @@ export default function Home() {
             }}
           />
           <ConnectWallet />
-          {isConnected && (
-            <div className=" flex items-center justify-center rounded-lg p-2">
-              <Button
-                onClick={() => {
-                  claimNft();
-                }}
-                isPrimary={true}
-                isGlass={false}
-                isSecondary={false}
-              >
-                <Typography content="Capture this unique NFT !" />
-              </Button>
-            </div>
-          )}
+          <div className=" flex items-center justify-center rounded-lg p-2">
+            {isConnected && (loadingInfo || loadingTxs) && (
+                <Button
+                  isPrimary={true}
+                  isGlass={false}
+                  isSecondary={false}
+                >
+                  <Typography content="Loading..." />
+                </Button>
+            )}
+            {isConnected && !loadingInfo && !loadingTxs && !canClaim && (
+                <Button
+                  isPrimary={true}
+                  isGlass={false}
+                  isSecondary={false}
+                >
+                  <Typography content="Sorry! Can't claim" />
+                </Button>
+            )}
+            {isConnected && canClaim && (
+                <Button
+                  onClick={claimNft}
+                  isPrimary={true}
+                  isGlass={false}
+                  isSecondary={false}
+                >
+                  <Typography content={`My score is ${score} txs! Capture the NFT !`} />
+                </Button>
+            )}
+          </div>
         </div>
         <div>
           <div className=" mb-4">
             <Image
-              className="relative "
+              className="relative"
               src="/qrcode.png"
               alt="qrcode"
               width={80}
@@ -234,16 +251,16 @@ export default function Home() {
             />
           </div>
 
-          <div className=" text-left">
-            <Typography content={`Score to beat: ${"65 txs"}`} variant="p" />
-            <Typography
-              content={`NFT Owner: ${shortenEthAddress(
-                "0x39946fd82c9c86c9a61bceed86fbdd284590bdd9"
-              )}`}
-              variant="p"
-              className="mb-2"
-            />
-          </div>
+          {loadingInfo ? <p>Loading</p> : 
+            <div className=" text-left">
+              <Typography content={`Score to beat: ${currentMax} tx`} variant="p" />
+              <Typography
+                content={`NFT Owner: ${shortenEthAddress(currentOwner)}`}
+                variant="p"
+                className="mb-2"
+              />
+            </div>
+          }
         </div>
       </div>
       <div className="w-full md:w-1/2 flex flex-col justify-center items-center text-center mt-4">
