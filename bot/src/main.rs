@@ -63,6 +63,7 @@ async fn async_main() -> eyre::Result<()> {
     let mut start_block_number = std::env::var("START_BLOCK_NUMBER").unwrap().parse::<u64>().unwrap();
     let address: Address = "0x6023974F44AE50635feEAaF9DEF6405f10299610".to_string().parse()?;
     let privkey = std::env::var("PRIVATE_KEY").unwrap();
+    let batch_size = std::env::var("BATCH_SIZE").unwrap().parse::<u64>().unwrap();
 
     let stylus_provider = Provider::<Http>::try_from(stylus_rpc_url)?;
     let mainnet_provider = Provider::<Http>::try_from(mainnet_rpc_url)?;
@@ -77,7 +78,6 @@ async fn async_main() -> eyre::Result<()> {
     let mut multicall = Multicall::new(stylus_client.clone(), Some(MULTICALL_ADDRESS)).await?;
 
     loop{
-        let batch_size = 50;
 
         let block_calls = (0..batch_size).map(|index| mainnet_provider.get_block(start_block_number - index));
         let blocks = futures::future::try_join_all(block_calls).await?;
