@@ -175,13 +175,87 @@ export default function Home() {
  */
 
   return (
-    <main className="flex min-h-screen  flex-col items-center justify-between p-12">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <div className="flex justify-between">
-          <Typography content={"Storylus"} variant="h2" />
-        </div>
+    <main className="flex min-h-screen  flex-col items-center justify-start p-10">
+      <div className="flex flex-col justify-center items-center ">
+        <Image
+          className="mb-2"
+          src="/EthDenver.png"
+          alt="EthDenver"
+          width={120}
+          height={120}
+        />
+      </div>
+      <Typography content={"Storylus Demo"} variant="h2" className="mb-4" />
 
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
+      <Typography
+        content={"Are you the most active dev on Sepolia during Eth Denver?"}
+        variant="p"
+        className="mb-6"
+      />
+
+      <div className=" flex place-items-center before:lg:h-[260px]  mb-6">
+        <div className="flex flex-col items-center justify-center mr-4">
+          <Image
+            className="relative mb-4 outline: 1px solid #1a2f4b"
+            src="/nft/storylus-demo-nft.png"
+            alt="storylus-demo-nft"
+            width={250}
+            height={100}
+            priority
+            style={{
+              border: "0.25px solid #825dc8",
+            }}
+          />
+          <ConnectWallet />
+          {isConnected && (
+            <div className=" flex items-center justify-center rounded-lg p-2">
+              <Button
+                onClick={() => {
+                  claimNft();
+                }}
+                isPrimary={true}
+                isGlass={false}
+                isSecondary={false}
+              >
+                <Typography content="Capture this unique NFT !" />
+              </Button>
+            </div>
+          )}
+        </div>
+        <div>
+          <div className=" mb-4">
+            <Image
+              className="relative "
+              src="/qrcode.png"
+              alt="qrcode"
+              width={80}
+              height={50}
+              priority
+            />
+          </div>
+
+          <div>
+            <Typography content={`Score to beat: ${"65 txs"}`} variant="p" />
+            <Typography
+              content={`NFT Owner: ${shortenEthAddress(
+                "0x39946fd82c9c86c9a61bceed86fbdd284590bdd9"
+              )}`}
+              variant="p"
+              className="mb-2"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col  justify-center items-center text-center mt-4">
+        <div className="flex w-1/2 mb-6 text-center justify-center items-center">
+          <Typography
+            content={
+              "The NFT is transferred only if an address  prove on-chain that it has made more transactions than the current owner between feb 23 - 10am (Block 5348475) to feb 29 - 8am (Block 5387881)"
+            }
+            variant="p"
+          />
+        </div>
+        <div className="flex w-1/2 text-center justify-center items-center">
           <a
             className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
             href="https://github.com/cometh-hq/optimistic-eth-history-prover"
@@ -191,59 +265,18 @@ export default function Home() {
             <Image
               src={"/social/github.svg"}
               alt={"Github"}
-              width={50}
-              height={50}
+              width={30}
+              height={30}
+            />
+
+            <Typography
+              content={"How does it work? Check the codebase"}
+              variant="p"
+              className="underline"
             />
           </a>
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/logo.png"
-          alt="logo"
-          width={180}
-          height={37}
-          priority
-        />
-        <div>
-          <div className="mb-4">
-            <Typography content={"Current Owner:"} variant="h6" />
-            <Typography
-              content={`${currentOwner}`}
-              variant="p"
-              className="mb-2"
-            />
-          </div>
-
-          <div>
-            <Typography content={"Number of Txs:"} variant="h6" />
-            <Typography content={"15"} variant="p" className="mb-2" />
-          </div>
-        </div>
-      </div>
-      <div className="flex-col justify-center items-center">
-        <h2 className="mb-3 mt-3 text-xl">{firstTransactionDate}</h2>
-        <ConnectWallet />
-
-        {isConnected && (
-          <div className=" flex items-center  justify-center rounded-lg p-2">
-            <Button
-              onClick={() => {
-                claimNft();
-              }}
-              isPrimary={true}
-              isGlass={false}
-              isSecondary={false}
-            >
-              <Typography content="Claim OG NFT" />
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/*       <Ranking /> */}
     </main>
   );
 }

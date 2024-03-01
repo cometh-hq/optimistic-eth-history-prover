@@ -28,7 +28,14 @@ const wagmiConfig = createConfig({
 });
 
 // 3. Create modal
-createWeb3Modal({ wagmiConfig, projectId, chains });
+createWeb3Modal({
+  wagmiConfig,
+  projectId,
+  chains,
+  themeVariables: {
+    "--w3m-accent": "#1a2f4b",
+  },
+});
 
 export default function RootLayout({
   children,
