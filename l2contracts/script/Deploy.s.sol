@@ -10,7 +10,7 @@ contract DeployScript is Script {
     vm.startBroadcast();
 
     ETHDenverBuilder nft = new ETHDenverBuilder();
-    ClaimNFT claimer = new ClaimNFT(nft, 0x6023974F44AE50635feEAaF9DEF6405f10299610, 5348475, 5387881);
+    ClaimNFT claimer = new ClaimNFT(nft, 0x9DFBC5488CDE99Bfd45a541C7E04988C2c846731, 5348475, 5387881);
     nft.grantRole(nft.CLAIMER_ROLE(), address(claimer));
 
     vm.stopBroadcast();
