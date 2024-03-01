@@ -14,7 +14,7 @@ async fn main() -> eyre::Result<()> {
 
 
     let rpc_url = "https://stylus-testnet.arbitrum.io/rpc".to_string();
-    let program_address = "0x6023974F44AE50635feEAaF9DEF6405f10299610".to_string();
+    let program_address = "0x9DFBC5488CDE99Bfd45a541C7E04988C2c846731".to_string();
     let privkey = std::env::var("PRIVATE_KEY").unwrap();
 
     abigen!(
@@ -38,11 +38,20 @@ async fn main() -> eyre::Result<()> {
     // Prover contract
     let history_prover = HistoryProver::new(address, client);
 
-    let block = U256::from(5357043);
-    let block_hash: [u8; 32] = hex::decode("73646fba8d16801b16e94aa7a89d4e21db95e03537317b3a378b34cacda0ebde").unwrap().try_into().unwrap();
+    {
+        let block = U256::from(5387881);
+        let block_hash: [u8; 32] = hex::decode("ba1ccebd78a1eabac826e8b553f7e110922cb4ab796d5cb178df82cf89d95fca").unwrap().try_into().unwrap();
 
-    let tx = history_prover.set_block_hash(block, block_hash).send().await?.await?;
-    println!("tx receipt = {:?}", tx);
+        let tx = history_prover.set_block_hash(block, block_hash).send().await?.await?;
+        println!("tx receipt = {:?}", tx);
+    }
+    {
+        let block = U256::from(5348475);
+        let block_hash: [u8; 32] = hex::decode("dab5a01b3fde9b7488281a36964b8d70fa1d32c7c118fd3323d3d139469b5b22").unwrap().try_into().unwrap();
+
+        let tx = history_prover.set_block_hash(block, block_hash).send().await?.await?;
+        println!("tx receipt = {:?}", tx);
+    }
 
     Ok(())
 }

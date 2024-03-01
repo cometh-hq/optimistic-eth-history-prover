@@ -96,6 +96,10 @@ impl Decodable for Header {
 #[external]
 impl HistoryProver {
 
+    pub fn get_block_hash(&self, block_number: U256) -> Result<FixedBytes<32>, Vec<u8>> {
+        Ok(self.block_hash.get(block_number))
+    }
+
     pub fn set_block_hash(&mut self, block_number: U256, block_hash:FixedBytes<32>)-> Result<(), Vec<u8>> {
         let mut new_block_hash = self.block_hash.setter(block_number);
         new_block_hash.set(block_hash);
