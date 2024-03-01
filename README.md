@@ -41,7 +41,7 @@ More than 256 Blocks in the past
 ### Protocol overview
 ![protocole-overview](./doc/protocole-overview.png)
 
-### 1 Push a L1 Block Header to l3 in a trustless way 
+### 1- Push a L1 Block Header to l3 in a trustless way 
 ![l1bridge](./doc/l1bridge.png)
 
 ### 2- Recursively prove previous blocks
