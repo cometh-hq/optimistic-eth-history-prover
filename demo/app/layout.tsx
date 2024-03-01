@@ -7,6 +7,8 @@ import { WagmiConfig, configureChains, createConfig } from "wagmi";
 import { arbitrumSepolia } from "viem/chains";
 import { createWeb3Modal } from "@web3modal/wagmi/react";
 import { InjectedConnector } from "wagmi/connectors/injected";
+import { CoinbaseWalletConnector } from "@wagmi/core/connectors/coinbaseWallet";
+import { WalletConnectConnector } from "@wagmi/core/connectors/walletConnect";
 
 import { publicProvider } from "wagmi/providers/public";
 
@@ -23,6 +25,16 @@ const { publicClient } = configureChains(chains, [publicProvider()]);
 const wagmiConfig = createConfig({
   connectors: [
     new InjectedConnector({ chains, options: { shimDisconnect: true } }),
+    new CoinbaseWalletConnector({
+      options: {
+        appName: "optimistic eth indexer",
+      },
+    }),
+    new WalletConnectConnector({
+      options: {
+        projectId,
+      },
+    }),
   ],
   publicClient,
 });
