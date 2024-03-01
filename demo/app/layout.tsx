@@ -39,7 +39,6 @@ const wagmiConfig = createConfig({
   publicClient,
 });
 
-// 3. Create modal
 createWeb3Modal({
   wagmiConfig,
   projectId,
