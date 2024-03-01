@@ -13,7 +13,7 @@ library TransactionHasher {
 
   error InvalidTransactionType(bytes1 txType);
 
-  function hash(bytes memory rawTx) public pure returns (bytes32 hashed, address signer, uint256 nonce) {
+  function hash(bytes memory rawTx) internal pure returns (bytes32 hashed, address signer, uint256 nonce) {
     if (rawTx[0] >= 0xc0) {
        return hashLegacy(rawTx);
     } else if (rawTx[0] == 0x01) {
@@ -27,7 +27,7 @@ library TransactionHasher {
     }
   }
 
-  function hash4844(bytes memory rawTx) public pure returns (bytes32 hashed, address signer, uint256 nonce) {
+  function hash4844(bytes memory rawTx) internal pure returns (bytes32 hashed, address signer, uint256 nonce) {
     // BLOB_TX_TYPE || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, to, value, data, access_list, max_fee_per_blob_gas, blob_versioned_hashes])
     RLPReader.RLPItem[] memory transaction = rawTx.toRlpItemWithOffset(1).toList();
 
@@ -47,7 +47,7 @@ library TransactionHasher {
     nonce = transaction[1].toUint();
   }
 
-  function hash1559(bytes memory rawTx) public pure returns (bytes32 hashed, address signer, uint256 nonce) {
+  function hash1559(bytes memory rawTx) internal pure returns (bytes32 hashed, address signer, uint256 nonce) {
     // 0x02 || rlp([chain_id, nonce, max_priority_fee_per_gas, max_fee_per_gas, gas_limit, destination, amount, data, access_list])
     RLPReader.RLPItem[] memory transaction = rawTx.toRlpItemWithOffset(1).toList();
 
@@ -67,7 +67,7 @@ library TransactionHasher {
     nonce = transaction[1].toUint();
   }
 
-  function hash2930(bytes memory rawTx) public pure returns (bytes32 hashed, address signer, uint256 nonce) {
+  function hash2930(bytes memory rawTx) internal pure returns (bytes32 hashed, address signer, uint256 nonce) {
     // 0x01 || rlp([chainId, nonce, gasPrice, gasLimit, to, value, data, accessList, signatureYParity, signatureR, signatureS]).
     RLPReader.RLPItem[] memory transaction = rawTx.toRlpItemWithOffset(1).toList();
 
@@ -87,7 +87,7 @@ library TransactionHasher {
     nonce = transaction[1].toUint();
   }
 
-  function hashLegacy(bytes memory rawTx) public pure returns (bytes32 hashed, address signer, uint256 nonce) {
+  function hashLegacy(bytes memory rawTx) internal pure returns (bytes32 hashed, address signer, uint256 nonce) {
     RLPReader.RLPItem[] memory transaction = rawTx.toRlpItem().toList();
 
     // (nonce, gasprice, startgas, to, value, data)

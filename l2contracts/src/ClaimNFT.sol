@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "forge-std/console.sol";
 import {MPT} from "./libs/MPT.sol";
-import {StorageVerifier} from "./libs/StorageVerifier.sol";
 import {TransactionHasher} from "./libs/TransactionHasher.sol";
-import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {RLPReader} from "./libs/RLPReader.sol";
 import {ETHDenverBuilder} from "./ETHDenverBuilder.sol";
 
-contract ClaimNFT is StorageVerifier {
+contract ClaimNFT {
     using RLPReader for bytes;
     using RLPReader for RLPReader.RLPItem;
 
