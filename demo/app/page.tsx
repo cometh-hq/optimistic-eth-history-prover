@@ -1,18 +1,20 @@
 "use client";
 
 import RLP from "rlp";
+import { BaseTrie as Trie } from "merkle-patricia-tree";
+import { toHex } from "viem";
 import { ethers } from "ethers";
 import Image from "next/image";
 
 import ConnectWallet from "./components/ConnectWallet";
-import { useAccount } from "wagmi";
+import { useAccount, useContractWrite, usePrepareContractWrite } from "wagmi";
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { toHex } from "viem";
 import { Button, Typography } from "@alembic/ui";
-import { useContractWrite, useContractRead } from "wagmi";
 import { shortenEthAddress } from "./lib/utils/utils";
 import { getTxHashInBlockRange } from "./lib/utils/alchemy";
+import { encodeHeader } from "./lib/utils/header";
 import { computeTxMerkleTrie } from "./lib/utils/trie";
+import ClaimNFTABI from "./lib/abi/ClaimNFT.json";
 
 
 const fromBlock = 5348475; // Feb-23-2024 05:00:00 PM +UTC
@@ -36,6 +38,13 @@ const stylusProvider = new ethers.JsonRpcProvider(
 );
 
 export default function Home() {
+  const { data: writeTx, write } = useContractWrite({
+    address: claimerAddress,
+    abi: ClaimNFTABI,
+    functionName: 'claim',
+    value: '0',
+  });
+
   const { isConnected, address } = useAccount();
   
   const [loadingInfo, setLoadingInfo] = useState(true);
@@ -64,6 +73,17 @@ export default function Home() {
     if (!address || !address.length) return;
     setLoadingTxs(true);
   }, [address]);
+
+  useEffect(() => {
+    if (!writeTx) return;
+
+    async function waitForTx() {
+      await arbitrumProvider.waitForTransaction(writeTx.hash);
+      setLoadingInfo(true);
+    }
+
+    waitForTx().catch(console.error);
+  }, [writeTx]);
 
   useEffect(() => {
     if (!loadingInfo) return;
@@ -100,8 +120,7 @@ export default function Home() {
           getTxHashInBlockRange(address, fromBlock, toBlock, 'desc'),
       ]);
 
-      // if first is set, second has to be set as well. So we check only first
-      if (!first) {
+      if (!first || !second) {
         setLoadingTxs(false);
         return;
       }
@@ -111,8 +130,8 @@ export default function Home() {
         provider.getTransaction(second.hash),
       ]);
 
-      setFirstTx(firstTxInfo);
-      setSecondTx(secondTxInfo);
+      setFirstTx(firstTxInfo!);
+      setSecondTx(secondTxInfo!);
       
       setLoadingTxs(false);
     }
@@ -128,6 +147,10 @@ export default function Home() {
           stylusProvider.getBlock('latest'),
       ]);
 
+      if (!lastL3Block) {
+        throw new Error('latest l3 block cannot be null')
+      }
+
       const [firstTrie, secondTrie] = await Promise.all([
         computeTxMerkleTrie(firstBlock),
         computeTxMerkleTrie(secondBlock),
@@ -142,38 +165,44 @@ export default function Home() {
       const getProof = (blockNumber: number) =>
         stylusProvider.send(
           "eth_getProof",
-          [historyProverAddress, [storageSlot(blockNumber)], ethers.toBeHex(lastL3Block.number)], 
+          [historyProverAddress, [storageSlot(blockNumber)], ethers.toBeHex(lastL3Block!.number)], 
         );
 
+      const [firstKey, secondKey] = [
+        RLP.encode(firstTx.index),
+        RLP.encode(secondTx.index),
+      ];
       const [firstProof, secondProof] = await Promise.all([
         getProof(firstBlock.number),
         getProof(secondBlock.number),
       ]);
 
-      console.log(firstBlock.number, firstProof);
-      console.log(secondBlock.number, secondProof);
+      const [firstTxProof, secondTxProof] = await Promise.all([
+        Trie.createProof(firstTrie, firstKey),
+        Trie.createProof(secondTrie, secondKey),
+      ]);
 
+      console.log(firstProof);
+      const l3StateRoot = lastL3Block.stateRoot;
+      // state proof is the same for both proofs because we prove against the same state
+      const l3StateProof = firstProof.accountProof;
+      const first = {
+        l1BlockHeader: encodeHeader(firstBlock),
+        txIndex: toHex(firstKey),
+        historyContractStorageProof: firstProof.storageProof[0].proof,
+        txProof: firstTxProof.map(toHex),
+      }
+      const second = {
+        l1BlockHeader: encodeHeader(secondBlock),
+        txIndex: toHex(secondKey),
+        historyContractStorageProof: secondProof.storageProof[0].proof,
+        txProof: secondTxProof.map(toHex),
+      }
+
+      write({
+        args: [l3StateRoot, l3StateProof, first, second],
+      });
   }, [firstTx, secondTx]);
-
-/*
-      const sKey = toHex(RLP.encode(userTx.transactionIndex));
-
-        const proof = await Trie.createProof(
-          trie,
-          Buffer.from(sKey.slice(2), "hex")
-        );
-
-        const value = await Trie.verifyProof(
-          trie.root,
-          Buffer.from(sKey.slice(2), "hex"),
-          proof
-        );
-
-        proofs.push([Buffer.from(sKey.slice(2), "hex"), proof]);
-
-    };
-  }, [isConnected]); // Only re-run the effect if count changes
-  */
 
   return (
     <main className="flex min-h-screen  flex-col items-center justify-start text-center p-10">
