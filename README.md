@@ -10,6 +10,12 @@ There is no native way to access historical state on Ethereum in a trustless way
 Over 19 million blocks written to Ethereum. Smart contracts can only access the latest 256 blocks representing ~50 minutes of data.
 ‘Historical data’ refers to anything outside of the last 256 blocks.
 
+## Deployed Contract
+
+### Sepolia
+
+### Stylus
+
 ## Uses cases examples
 
 - Confirm past user asset ownership
@@ -23,7 +29,7 @@ Over 19 million blocks written to Ethereum. Smart contracts can only access the 
 - [Rust Bot to fill L1 Data](https://github.com/cometh-hq/optimistic-eth-history-prover/tree/main/bot)
 - [Claimer (proofs verifier)](https://github.com/cometh-hq/optimistic-eth-history-prover/blob/main/l2contracts/src/ClaimNFT.sol)
 - [Hasher Lib (Recover Signer from Tx)](https://github.com/cometh-hq/optimistic-eth-history-prover/blob/main/l2contracts/src/libs/TransactionHasher.sol)
-- [TX Trie implementation](https://github.com/cometh-hq/optimistic-eth-history-prover/blob/main/demo/app/page.tsx#L112)
+- [TX Trie implementation](https://github.com/cometh-hq/optimistic-eth-history-prover/blob/main/demo/app/lib/utils/trie.ts)
 - [Demo Frontend](https://github.com/cometh-hq/optimistic-eth-history-prover/tree/main/demo) and [NFT](https://github.com/cometh-hq/optimistic-eth-history-prover/blob/main/l2contracts/src/ETHDenverBuilder.sol)
 
 ## Protocol Usage Demo
