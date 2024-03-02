@@ -11,7 +11,7 @@ export async function getTxHashInBlockRange(
   start: number,
   end: number,
   order: 'asc' | 'desc'
-): Promise<{ hash: string; number: string } | null> {
+): Promise<{ hash: string; block: string } | null> {
   /* @ts-ignore */
   const result = await alchemy.core.getAssetTransfers({
     fromBlock: start,

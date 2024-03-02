@@ -42,20 +42,18 @@ export default function Home() {
     address: claimerAddress,
     abi: ClaimNFTABI,
     functionName: 'claim',
-    value: '0',
+    value: BigInt(0),
   });
 
   const { isConnected, address } = useAccount();
   
   const [loadingInfo, setLoadingInfo] = useState(true);
-  const [currentOwner, setCurrentOwner] = useState();
-  const [currentMax, setCurrentMax] = useState();
+  const [currentOwner, setCurrentOwner] = useState<any>();
+  const [currentMax, setCurrentMax] = useState<number>();
 
   const [loadingTxs, setLoadingTxs] = useState(false);
-  const [firstTx, setFirstTx] = useState();
-  const [secondTx, setSecondTx] = useState();
-
-  const [loadingBlocks, setLoadingBlocks] = useState();
+  const [firstTx, setFirstTx] = useState<any>();
+  const [secondTx, setSecondTx] = useState<any>();
 
   const score = useMemo(() => {
     if (!firstTx || !secondTx) return 0;
@@ -65,6 +63,7 @@ export default function Home() {
 
   const canClaim = useMemo(() => {
     if (loadingInfo) return false;
+    if (!currentMax) return false;
     
     return score > currentMax;
   }, [loadingInfo, currentMax, score])
@@ -75,9 +74,8 @@ export default function Home() {
   }, [address]);
 
   useEffect(() => {
-    if (!writeTx) return;
-
     async function waitForTx() {
+      if (!writeTx) return;
       await arbitrumProvider.waitForTransaction(writeTx.hash);
       setLoadingInfo(true);
     }
@@ -111,10 +109,10 @@ export default function Home() {
   }, [loadingInfo]);
 
   useEffect(() => {
-    if (!address || !address.length) return;
-    if (!loadingTxs) return;
-
     async function loadTxs() {
+      if (!address || !address.length) return;
+      if (!loadingTxs) return;
+
       const [first, second] = await Promise.all([
           getTxHashInBlockRange(address, fromBlock, toBlock, 'asc'),
           getTxHashInBlockRange(address, fromBlock, toBlock, 'desc'),
@@ -178,8 +176,8 @@ export default function Home() {
       ]);
 
       const [firstTxProof, secondTxProof] = await Promise.all([
-        Trie.createProof(firstTrie, firstKey),
-        Trie.createProof(secondTrie, secondKey),
+        Trie.createProof(firstTrie, Buffer.from(firstKey)),
+        Trie.createProof(secondTrie, Buffer.from(secondKey)),
       ]);
 
       console.log(firstProof);
@@ -190,19 +188,19 @@ export default function Home() {
         l1BlockHeader: encodeHeader(firstBlock),
         txIndex: toHex(firstKey),
         historyContractStorageProof: firstProof.storageProof[0].proof,
-        txProof: firstTxProof.map(toHex),
+        txProof: firstTxProof.map(toHex as any),
       }
       const second = {
         l1BlockHeader: encodeHeader(secondBlock),
         txIndex: toHex(secondKey),
         historyContractStorageProof: secondProof.storageProof[0].proof,
-        txProof: secondTxProof.map(toHex),
+        txProof: secondTxProof.map(toHex as any),
       }
 
       write({
         args: [l3StateRoot, l3StateProof, first, second],
       });
-  }, [firstTx, secondTx]);
+  }, [firstTx, secondTx, write]);
 
   return (
     <main className="flex min-h-screen  flex-col items-center justify-start text-center p-10">
@@ -240,6 +238,7 @@ export default function Home() {
           <div className=" flex items-center justify-center rounded-lg p-2">
             {isConnected && (loadingInfo || loadingTxs) && (
                 <Button
+                  onClick={() => {}}
                   isPrimary={true}
                   isGlass={false}
                   isSecondary={false}
@@ -249,6 +248,7 @@ export default function Home() {
             )}
             {isConnected && !loadingInfo && !loadingTxs && !canClaim && (
                 <Button
+                  onClick={() => {}}
                   isPrimary={true}
                   isGlass={false}
                   isSecondary={false}
