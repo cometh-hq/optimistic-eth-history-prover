@@ -12,9 +12,8 @@ Over 19 million blocks written to Ethereum. Smart contracts can only access the 
 
 ## Uses cases examples
 
-- Confirm user asset ownership on specific app chain
+- Confirm past user asset ownership
 - Proof of usage of a protocol
-- Prove that you have owned an NFT in the past
 - bypass the need for bridging
 - …
 
