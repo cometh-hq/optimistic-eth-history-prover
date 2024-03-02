@@ -10,7 +10,15 @@ There is no native way to access historical state on Ethereum in a trustless way
 Over 19 million blocks written to Ethereum. Smart contracts can only access the latest 256 blocks representing ~50 minutes of data.
 ‘Historical data’ refers to anything outside of the last 256 blocks.
 
-## Deployed Contract
+## Deployed contracts
+
+| Sepolia | Arbitrum Sepolia | Arbitrum Stylus Testnet |
+| :----: | :----: | :----: |
+| L1BlockBridger^ | L2BlockBridger^ | [HistoryProver](https://stylus-testnet-explorer.arbitrum.io/address/0x9DFBC5488CDE99Bfd45a541C7E04988C2c846731) |
+|                 |  [ClaimNFT](https://sepolia.arbiscan.io/address/0xe52D9cC63Bb5b8d662F0507E86b5c582C00f9Bf2#code) | |
+|                 | [NFT](https://sepolia.arbiscan.io/address/0x0d742dA17b06b9bfb7F9dDA9632FAb1e52383b1A#code)  | |
+
+*^: not deployed*
 
 ### Sepolia
 
