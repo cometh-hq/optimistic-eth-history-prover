@@ -7,7 +7,7 @@ import { ethers } from "ethers";
 import Image from "next/image";
 
 import ConnectWallet from "./components/ConnectWallet";
-import { useAccount, useContractWrite, usePrepareContractWrite } from "wagmi";
+import { useAccount, useContractWrite } from "wagmi";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Button, Typography } from "@alembic/ui";
 import { shortenEthAddress } from "./lib/utils/utils";
@@ -20,8 +20,8 @@ import ClaimNFTABI from "./lib/abi/ClaimNFT.json";
 const fromBlock = 5348475; // Feb-23-2024 05:00:00 PM +UTC
 const toBlock = 5387881; // Feb-29-2024 01:51:00 PM +UTC
 
-const nftAddress = "0x815Ccb32658CA148742208153C4FCEB919762828";
-const claimerAddress = "0x2109514fE223CFb6ae1862c1C25EaEb47a14605B";
+const nftAddress = "0x0d742dA17b06b9bfb7F9dDA9632FAb1e52383b1A";
+const claimerAddress = "0xe52D9cC63Bb5b8d662F0507E86b5c582C00f9Bf2";
 const historyProverAddress = "0x9DFBC5488CDE99Bfd45a541C7E04988C2c846731";
 
 const provider = new ethers.AlchemyProvider(
@@ -38,7 +38,7 @@ const stylusProvider = new ethers.JsonRpcProvider(
 );
 
 export default function Home() {
-  const { data: writeTx, write } = useContractWrite({
+  const { data: writeTx, status: txStatus, isLoading, write } = useContractWrite({
     address: claimerAddress,
     abi: ClaimNFTABI,
     functionName: 'claim',
@@ -58,15 +58,21 @@ export default function Home() {
   const score = useMemo(() => {
     if (!firstTx || !secondTx) return 0;
 
-    return secondTx.nonce - firstTx.nonce;
+    return (secondTx.nonce - firstTx.nonce) + 1;
   }, [firstTx, secondTx])
 
   const canClaim = useMemo(() => {
     if (loadingInfo) return false;
-    if (!currentMax) return false;
+    if (!currentMax && currentMax !== 0) return false;
     
     return score > currentMax;
   }, [loadingInfo, currentMax, score])
+
+  const isCurrentOwner = useMemo(() => {
+    if (!currentOwner || !address) return false;
+
+    return address === currentOwner.toString()
+  }, [address, currentOwner]);
 
   useEffect(() => {
     if (!address || !address.length) return;
@@ -93,7 +99,7 @@ export default function Home() {
         data: "0x6352211e0000000000000000000000000000000000000000000000000000000000000000",
       });
       const nftOwner = ethers.AbiCoder.defaultAbiCoder().decode(['address'], nftOwner32);
-      setCurrentOwner(nftOwner);
+      setCurrentOwner(nftOwner.toString());
 
       const currentMax32 = await arbitrumProvider.call({
         to: claimerAddress,
@@ -236,7 +242,8 @@ export default function Home() {
           />
           <ConnectWallet />
           <div className=" flex items-center justify-center rounded-lg p-2">
-            {isConnected && (loadingInfo || loadingTxs) && (
+            {isConnected &&
+              (loadingInfo || loadingTxs || isLoading || (!!writeTx && txStatus !== 'success')) && (
                 <Button
                   onClick={() => {}}
                   isPrimary={true}
@@ -246,7 +253,17 @@ export default function Home() {
                   <Typography content="Loading..." />
                 </Button>
             )}
-            {isConnected && !loadingInfo && !loadingTxs && !canClaim && (
+            {isConnected && !loadingInfo && !!address && isCurrentOwner && (
+                <Button
+                  onClick={() => {}}
+                  isPrimary={true}
+                  isGlass={false}
+                  isSecondary={false}
+                >
+                  <Typography content="YOU ARE THE ONE" />
+                </Button>
+            )}
+            {isConnected && !loadingInfo && !loadingTxs && !canClaim && !isCurrentOwner && (
                 <Button
                   onClick={() => {}}
                   isPrimary={true}
@@ -256,7 +273,7 @@ export default function Home() {
                   <Typography content="Sorry! Can't claim" />
                 </Button>
             )}
-            {isConnected && canClaim && (
+            {isConnected && !isCurrentOwner && canClaim && !isLoading && !writeTx && (
                 <Button
                   onClick={claimNft}
                   isPrimary={true}

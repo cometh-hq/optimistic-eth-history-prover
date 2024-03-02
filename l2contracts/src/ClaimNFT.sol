@@ -87,9 +87,9 @@ contract ClaimNFT {
 
       uint256 txCount;
       if (firstTxBlockNumber > secondTxBlockNumber) {
-        txCount = firstTxNonce - secondTxNonce;
+        txCount = (firstTxNonce - secondTxNonce) + 1;
       } else {
-        txCount = secondTxNonce - firstTxNonce;
+        txCount = (secondTxNonce - firstTxNonce) + 1;
       }
 
       if (txCount <= maxTxCount) {
