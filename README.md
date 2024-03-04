@@ -2,12 +2,12 @@
 ![logo](./doc/logo.png)
 ## What is Storylus?
 
-Storylus is a permissionless Protocol that gives smart contracts access to all of Ethereum’s historical data with storage proofs by Proving Ethereum’s chain of block.
+Storylus is a permissionless Protocol that gives smart contracts access to all of Ethereum’s historical data with storage proofs by Proving Ethereum’s chain of blocks.
 
 ## Why Storylus ?
 
 There is no native way to access historical state on Ethereum in a trustless way.
-Over 19 million blocks written to Ethereum. Smart contracts can only access the latest 256 blocks representing ~50 minutes of data.
+Over 19 million blocks were created as of March 2024. Smart contracts can only access the latest 256 blocks representing ~50 minutes of data.
 ‘Historical data’ refers to anything outside of the last 256 blocks.
 
 ## Deployed contracts
@@ -34,9 +34,8 @@ Over 19 million blocks written to Ethereum. Smart contracts can only access the 
 - [Demo Frontend](https://github.com/cometh-hq/optimistic-eth-history-prover/tree/main/demo) and [NFT](https://github.com/cometh-hq/optimistic-eth-history-prover/blob/main/l2contracts/src/ETHDenverBuilder.sol)
 
 ## Protocol Usage Demo
-The demo is a Capture the (nft) Flag
-The NFT is transferred only if an address proves on-chain that it has made more transactions than the current NFT owner during EthDenver
-More than 256 Blocks in the past
+The demo is a Capture the (NFT) Flag.
+The NFT is transferred only if an address proves on-chain that it has made more transactions than the current NFT owner during EthDenver and more than 256 Blocks in the past.
 
 - [Code](https://github.com/cometh-hq/optimistic-eth-history-prover/tree/main/demo)
 - [Live Demo](https://optimistic-eth-history-prover.vercel.app/)
